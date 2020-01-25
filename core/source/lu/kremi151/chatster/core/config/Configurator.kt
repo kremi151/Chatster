@@ -31,8 +31,10 @@ class Configurator(
     private val beans: MutableMap<Class<*>, Any> = HashMap()
 
     fun collectPluginProviders() {
+        // Scan plugins for providers and register plugins themselves as beans
         for (plugin in pluginRegistry.plugins) {
             collectProviders(plugin)
+            beans[plugin.javaClass] = plugin
         }
     }
 
