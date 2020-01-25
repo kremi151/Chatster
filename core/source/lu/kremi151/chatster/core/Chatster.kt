@@ -22,6 +22,7 @@ import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
+import lu.kremi151.chatster.core.registry.PluginRegistry
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -53,10 +54,10 @@ open class Chatster {
 
         LOGGER.info("Loading plugins")
         var pluginsTime = System.currentTimeMillis()
-        val plugins = ArrayList<ChatsterPlugin>()
-        loadPlugins(plugins)
+        val pluginRegistry = PluginRegistry()
+        loadPlugins(pluginRegistry)
         pluginsTime = System.currentTimeMillis() - pluginsTime
-        LOGGER.info("Loaded {} plugins in {} ms", plugins.size, pluginsTime)
+        LOGGER.info("Loaded {} plugins in {} ms", pluginRegistry.size, pluginsTime)
 
         initTime = System.currentTimeMillis() - initTime
         LOGGER.info("Initialized Chatster in {} ms", initTime)
@@ -72,7 +73,7 @@ open class Chatster {
 
     open val pluginsFolder: File get() = createFolderIfNotExists("plugins")
 
-    open fun loadPlugins(outPlugins: MutableList<ChatsterPlugin>) {
+    open fun loadPlugins(registry: PluginRegistry) {
         val pluginsFolder = pluginsFolder
         val pluginJars = pluginsFolder.listFiles { _, name -> name.endsWith(".jar") }
         if (pluginJars == null || pluginJars.isEmpty()) {
@@ -88,19 +89,19 @@ open class Chatster {
             if (scanPackage == null || scanPackage!!.isBlank()) {
                 continue
             }
-            loadPlugin(pluginJar, scanPackage!!, outPlugins)
+            loadPlugin(pluginJar, scanPackage!!, registry)
         }
     }
 
-    private fun loadPlugin(pluginJar: File, scanPackage: String, outPlugins: MutableList<ChatsterPlugin>) {
+    private fun loadPlugin(pluginJar: File, scanPackage: String, registry: PluginRegistry) {
         val childClassLoader = URLClassLoader(
                 arrayOf(pluginJar.toURI().toURL()),
                 javaClass.classLoader
         )
-        scanPackageForPluginDefinitions(scanPackage, childClassLoader, outPlugins)
+        scanPackageForPluginDefinitions(scanPackage, childClassLoader, registry)
     }
 
-    private fun scanPackageForPluginDefinitions(packageName: String, classLoader: ClassLoader, outPlugins: MutableList<ChatsterPlugin>) {
+    private fun scanPackageForPluginDefinitions(packageName: String, classLoader: ClassLoader, registry: PluginRegistry) {
         val urls = ClasspathHelper.forPackage(packageName, classLoader)
         val reflections = Reflections(ConfigurationBuilder.build().setUrls(urls)
                 .addClassLoaders(classLoader).addScanners(SubTypesScanner(), TypeAnnotationsScanner()))
@@ -117,7 +118,7 @@ open class Chatster {
             }
             try {
                 val plugin = clazz.getConstructor().newInstance() as ChatsterPlugin
-                outPlugins.add(plugin)
+                registry.register(plugin)
                 LOGGER.info("Loaded plugin {} ({})", meta.name, meta.id)
             } catch (e: Exception) {
                 throw IOException("Could not load plugin", e)
