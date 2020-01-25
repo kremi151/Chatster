@@ -116,6 +116,7 @@ class Configurator(
                 val factoryEntry = factoryEntries.last()
                 val bean = factoryEntry.method.invoke(factoryEntry.holder)
                 beans[fieldType] = bean
+                autoConfigure(bean)
                 field.set(obj, bean)
                 return
             }
