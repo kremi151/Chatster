@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api.context
+package lu.kremi151.chatster.api.command
 
-import java.io.File
+import java.io.IOException
 
-interface CommandContext {
+interface CommandProvider {
 
-    fun sendTextMessage(message: String)
-    fun sendTextMessage(file: File)
-    fun sendTextMessage(message: String, file: File)
-
-    fun sendWriting(started: Boolean)
+    @Throws(IOException::class)
+    fun registerCommands(builder: RootCommandBuilder, registry: CommandRegistry)
 
 }

@@ -16,4 +16,11 @@
 
 package lu.kremi151.chatster.api.plugin
 
-interface ChatsterPlugin
+import lu.kremi151.chatster.api.command.CommandProvider
+import lu.kremi151.chatster.api.util.Handler
+
+abstract class ChatsterPlugin {
+
+    open fun onRegisterCommands(register: Handler<CommandProvider>) {}
+
+}

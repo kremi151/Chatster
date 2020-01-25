@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api.context
+package lu.kremi151.chatster.core.services
 
-import java.io.File
+import com.mojang.brigadier.CommandDispatcher
+import lu.kremi151.chatster.api.context.CommandContext
 
-interface CommandContext {
+class CommandDispatcherHolder(
+        private val dispatcher: CommandDispatcher<CommandContext>
+) {
 
-    fun sendTextMessage(message: String)
-    fun sendTextMessage(file: File)
-    fun sendTextMessage(message: String, file: File)
-
-    fun sendWriting(started: Boolean)
+    val commandDispatcher: CommandDispatcher<CommandContext> get() = dispatcher
 
 }

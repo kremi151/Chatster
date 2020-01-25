@@ -16,16 +16,25 @@
 
 package lu.kremi151.chatster.core
 
+import com.mojang.brigadier.CommandDispatcher
+import lu.kremi151.chatster.api.annotations.Inject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
+import lu.kremi151.chatster.api.annotations.Provider
+import lu.kremi151.chatster.api.command.CommandRegistry
+import lu.kremi151.chatster.api.command.LiteralCommandBuilder
+import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
+import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
 import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.core.plugin.CorePlugin
+import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
+import lu.kremi151.chatster.core.services.CommandDispatcherHolder
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -39,6 +48,9 @@ open class Chatster {
 
         private const val MANIFEST_PLUGIN_CLASS = "Chatster-Plugin-Class"
     }
+
+    @Inject
+    private lateinit var commandDispatcherHolder: CommandDispatcherHolder
 
     fun launch() {
         LOGGER.info("Initializing Chatster")
@@ -61,10 +73,33 @@ open class Chatster {
         LOGGER.info("Configure plugins")
         configTime = System.currentTimeMillis()
         val configurator = Configurator(pluginRegistry)
+        configurator.collectProviders(this)
         configurator.collectPluginProviders()
         configurator.autoConfigurePlugins()
+        configurator.autoConfigure(this)
         configTime = System.currentTimeMillis() - configTime
         LOGGER.info("Configured plugins in {} ms", configTime)
+
+        LOGGER.info("Setting up commands")
+        var commandsTime = System.currentTimeMillis()
+        val commandsList = ArrayList<CommandRegistration>()
+        pluginRegistry.collectCommandProviders(commandsList)
+        val commandDispatcher = commandDispatcherHolder.commandDispatcher
+        for (provider in commandsList) {
+            configurator.autoConfigure(provider.commandProvider)
+            provider.commandProvider.registerCommands(RootCommandBuilderImpl(commandDispatcher), object : CommandRegistry {
+
+                override fun registerCommand(rootNode: LiteralCommandBuilder) {
+                    if (!LiteralCommandBuilderImpl::class.java.isAssignableFrom(rootNode.javaClass)) {
+                        throw IllegalArgumentException("Unsupported command builder class ${rootNode.javaClass}")
+                    }
+                    commandDispatcher.register((rootNode as LiteralCommandBuilderImpl).appliedRootNode)
+                }
+
+            })
+        }
+        commandsTime = System.currentTimeMillis() - commandsTime
+        LOGGER.info("Set up commands in {} ms", commandsTime)
 
         initTime = System.currentTimeMillis() - initTime
         LOGGER.info("Initialized Chatster in {} ms", initTime)
@@ -127,6 +162,11 @@ open class Chatster {
 
     protected open fun loadGlobalConfig() {
         // TODO: Implement
+    }
+
+    @Provider
+    fun getCommandDispatcherHolder(): CommandDispatcherHolder {
+        return CommandDispatcherHolder(CommandDispatcher())
     }
 
 }

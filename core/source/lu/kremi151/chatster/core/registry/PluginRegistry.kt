@@ -35,6 +35,14 @@ class PluginRegistry {
         idToPlugins = idToPlugins.plus(Pair(plugin.id, plugin))
     }
 
+    fun collectCommandProviders(outProviders: MutableList<CommandRegistration>) {
+        for (plugin in idToPlugins.entries) {
+            plugin.value.plugin.onRegisterCommands { provider ->
+                outProviders.add(CommandRegistration(plugin.value.id, provider))
+            }
+        }
+    }
+
     val size get() = idToPlugins.size
     val plugins get() = pluginList
 

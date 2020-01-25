@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api.context
+package lu.kremi151.chatster.core.registry
 
-import java.io.File
+import lu.kremi151.chatster.api.command.CommandProvider
 
-interface CommandContext {
-
-    fun sendTextMessage(message: String)
-    fun sendTextMessage(file: File)
-    fun sendTextMessage(message: String, file: File)
-
-    fun sendWriting(started: Boolean)
-
-}
+data class CommandRegistration(
+        val pluginId: String,
+        val commandProvider: CommandProvider
+)
