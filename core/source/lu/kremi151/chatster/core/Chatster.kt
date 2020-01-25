@@ -22,12 +22,8 @@ import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
+import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
-import org.reflections.Reflections
-import org.reflections.scanners.SubTypesScanner
-import org.reflections.scanners.TypeAnnotationsScanner
-import org.reflections.util.ClasspathHelper
-import org.reflections.util.ConfigurationBuilder
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -39,7 +35,7 @@ open class Chatster {
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
 
-        private val MANIFEST_PLUGIN_SCAN_PACKAGE = "Chatster-Scan-Package"
+        private const val MANIFEST_PLUGIN_CLASS = "Chatster-Plugin-Class"
     }
 
     fun launch() {
@@ -72,6 +68,7 @@ open class Chatster {
     }
 
     open val pluginsFolder: File get() = createFolderIfNotExists("plugins")
+    open val configFolder: File get() = createFolderIfNotExists("config")
 
     open fun loadPlugins(registry: PluginRegistry) {
         val pluginsFolder = pluginsFolder
@@ -80,50 +77,37 @@ open class Chatster {
             return
         }
         for (pluginJar in pluginJars) {
-            var scanPackage: String? = null
+            var pluginClassName: String? = null
             JarInputStream(FileInputStream(pluginJar)).use { jarStream ->
                 val manifest = jarStream.manifest
                 val attributes = manifest.mainAttributes
-                scanPackage = attributes.getValue(MANIFEST_PLUGIN_SCAN_PACKAGE)
+                pluginClassName = attributes.getValue(MANIFEST_PLUGIN_CLASS)
             }
-            if (scanPackage == null || scanPackage!!.isBlank()) {
+            if (pluginClassName == null || pluginClassName!!.isBlank()) {
                 continue
             }
-            loadPlugin(pluginJar, scanPackage!!, registry)
+            try {
+                val registration = loadPlugin(pluginJar, pluginClassName!!)
+                registry.register(registration)
+                LOGGER.info("Loaded plugin {} ({})", registration.name, registration.id)
+            } catch (e: Exception) {
+                LOGGER.warn("An error occurred while loading plugin at {}, skipping", pluginJar, e)
+            }
         }
     }
 
-    private fun loadPlugin(pluginJar: File, scanPackage: String, registry: PluginRegistry) {
+    private fun loadPlugin(pluginJar: File, pluginClassName: String): PluginRegistration {
         val childClassLoader = URLClassLoader(
                 arrayOf(pluginJar.toURI().toURL()),
                 javaClass.classLoader
         )
-        scanPackageForPluginDefinitions(scanPackage, childClassLoader, registry)
-    }
-
-    private fun scanPackageForPluginDefinitions(packageName: String, classLoader: ClassLoader, registry: PluginRegistry) {
-        val urls = ClasspathHelper.forPackage(packageName, classLoader)
-        val reflections = Reflections(ConfigurationBuilder.build().setUrls(urls)
-                .addClassLoaders(classLoader).addScanners(SubTypesScanner(), TypeAnnotationsScanner()))
-        val classes = reflections.getTypesAnnotatedWith(Plugin::class.java)
-        for (clazz in classes) {
-            if (!ChatsterPlugin::class.java.isAssignableFrom(clazz)) {
-                LOGGER.warn("Plugin class {} does not extend {}, skipping", clazz.name, ChatsterPlugin::class.java.name)
-                continue
-            }
-            val meta = clazz.getAnnotation(Plugin::class.java)
-            if (meta == null) {
-                LOGGER.warn("Plugin class {} is not annotated with {}, skipping", clazz.name, Plugin::class.java.name)
-                continue
-            }
-            try {
-                val plugin = clazz.getConstructor().newInstance() as ChatsterPlugin
-                registry.register(plugin)
-                LOGGER.info("Loaded plugin {} ({})", meta.name, meta.id)
-            } catch (e: Exception) {
-                throw IOException("Could not load plugin", e)
-            }
+        val clazz = Class.forName(pluginClassName, true, childClassLoader)
+        if (!ChatsterPlugin::class.java.isAssignableFrom(clazz)) {
+            throw IOException("Plugin class " + clazz.name + " does is no sub class of " + ChatsterPlugin::class.java.name)
         }
+        val meta = clazz.getAnnotation(Plugin::class.java) ?: throw IOException("Plugin class " + clazz.name + " is not annotated with " + Plugin::class.java.name)
+        val plugin = clazz.getConstructor().newInstance() as ChatsterPlugin
+        return PluginRegistration(meta.id, meta.name, plugin)
     }
 
     open fun loadGlobalConfig() {

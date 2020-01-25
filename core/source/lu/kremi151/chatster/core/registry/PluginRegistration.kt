@@ -18,14 +18,8 @@ package lu.kremi151.chatster.core.registry
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 
-class PluginRegistry {
-
-    private var plugins: List<ChatsterPlugin> = emptyList()
-
-    fun register(plugin: PluginRegistration) {
-        plugins = plugins.plus(plugin.plugin)
-    }
-
-    val size get() = plugins.size
-
-}
+data class PluginRegistration (
+        val id: String,
+        val name: String,
+        val plugin: ChatsterPlugin
+)
