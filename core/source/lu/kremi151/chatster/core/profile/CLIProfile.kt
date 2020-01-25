@@ -1,0 +1,73 @@
+/**
+ * Copyright 2020 Michel Kremer (kremi151)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package lu.kremi151.chatster.core.profile
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import lu.kremi151.chatster.api.message.Message
+import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.util.Handler
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.lang.invoke.MethodHandles
+import java.util.*
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class CLIProfile: Profile<Message> {
+
+    companion object {
+        private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
+    }
+
+    override var id: String = ""
+
+    override fun setup() {
+        LOGGER.info("Using $javaClass for profile $id. This should only be used for testing purposes.")
+    }
+
+    override fun listenForMessages(handler: Handler<Message>) {
+        Scanner(System.`in`).use { scanner ->
+            while (true) {
+                val line = scanner.nextLine()
+                handler(CLIMessage(line))
+            }
+        }
+    }
+
+    override fun sendTextMessage(inboundMessage: Message, response: String) {
+        System.out.println(response)
+    }
+
+    override fun sendTextMessage(inboundMessage: Message, file: File) {
+        System.out.println("[File] ${file.absolutePath} (${file.length()} bytes)")
+    }
+
+    override fun sendWritingStatus(inboundMessage: Message, startedWriting: Boolean) {
+        if (startedWriting) {
+            System.out.println("Bot is writing")
+        } else {
+            System.out.println("Bot stopped writing")
+        }
+    }
+
+    override fun acknowledgeMessage(inboundMessage: Message) {
+        System.out.println("Bot has read the message")
+    }
+
+    data class CLIMessage(override val message: String): Message
+
+}

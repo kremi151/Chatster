@@ -16,6 +16,7 @@
 
 package lu.kremi151.chatster.core
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.mojang.brigadier.CommandDispatcher
 import lu.kremi151.chatster.api.annotations.Inject
 import org.slf4j.Logger
@@ -27,10 +28,12 @@ import lu.kremi151.chatster.api.annotations.Plugin
 import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.command.CommandRegistry
 import lu.kremi151.chatster.api.command.LiteralCommandBuilder
+import lu.kremi151.chatster.api.profile.Profile
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
 import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
 import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.core.plugin.CorePlugin
+import lu.kremi151.chatster.core.profile.CLIProfile
 import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
@@ -52,6 +55,9 @@ open class Chatster {
 
     @Inject
     private lateinit var commandDispatcherHolder: CommandDispatcherHolder
+
+    @Inject
+    private lateinit var objectMapper: ObjectMapper
 
     fun launch() {
         LOGGER.info("Initializing Chatster")
@@ -102,6 +108,13 @@ open class Chatster {
         commandsTime = System.currentTimeMillis() - commandsTime
         LOGGER.info("Set up commands in {} ms", commandsTime)
 
+        LOGGER.info("Loading profiles")
+        var profileTime = System.currentTimeMillis()
+        val profiles = ArrayList<Profile<*>>()
+        loadProfiles(profiles)
+        profileTime = System.currentTimeMillis() - profileTime
+        LOGGER.info("Loaded profiles in {} ms", profileTime)
+
         initTime = System.currentTimeMillis() - initTime
         LOGGER.info("Initialized Chatster in {} ms", initTime)
     }
@@ -116,6 +129,7 @@ open class Chatster {
 
     open val pluginsFolder: File get() = createFolderIfNotExists("plugins")
     open val configFolder: File get() = createFolderIfNotExists("config")
+    open val profilesFolder: File get() = createFolderIfNotExists("profiles")
 
     protected open fun loadPlugins(registry: PluginRegistry) {
         val pluginsFolder = pluginsFolder
@@ -165,6 +179,38 @@ open class Chatster {
         // TODO: Implement
     }
 
+    protected open fun loadProfiles(outProfiles: MutableList<Profile<*>>) {
+        val profilesFolder = this.profilesFolder
+        val subfolders = profilesFolder.listFiles { file -> file.isDirectory && file.canRead() }
+        if (subfolders == null || subfolders.isEmpty()) {
+            return
+        }
+        for (subfolder in subfolders) {
+            val profileFile = File(subfolder, "profile.json")
+            if (!profileFile.exists() || !profileFile.canRead()) {
+                continue
+            }
+            val jsonNode = FileInputStream(profileFile).use { inputStream -> objectMapper.readTree(inputStream) }
+            val classNameNode = jsonNode.get("className")
+            val className = if (classNameNode == null || classNameNode.isNull) null else classNameNode.asText(null)
+            var clazz: Class<out Profile<*>>
+            if (className == null || className.isBlank()) {
+                LOGGER.warn("Profile at $profileFile does not specify a className, using default one")
+                clazz = CLIProfile::class.java
+            } else {
+                try {
+                    @Suppress("UNCHECKED_CAST")
+                    clazz = Class.forName(className) as Class<out Profile<*>>
+                } catch (e: Exception) {
+                    LOGGER.warn("Could not load profile from $profileFile", e)
+                    continue
+                }
+            }
+            val profile = objectMapper.treeToValue(jsonNode, clazz)
+            outProfiles.add(profile)
+        }
+    }
+
     @Provider
     fun createCommandDispatcherHolder(): CommandDispatcherHolder {
         return CommandDispatcherHolder(CommandDispatcher())
@@ -173,6 +219,11 @@ open class Chatster {
     @Provider
     fun createConfidentialCredentialStore(): ConfidentialCredentialStore {
         return ConfidentialCredentialStore()
+    }
+
+    @Provider
+    fun createObjectMapper(): ObjectMapper {
+        return ObjectMapper()
     }
 
 }

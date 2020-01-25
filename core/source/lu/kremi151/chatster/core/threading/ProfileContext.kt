@@ -18,14 +18,13 @@ package lu.kremi151.chatster.core.threading
 
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.Profile
-import lu.kremi151.chatster.api.profile.ProfileConfig
 
-interface ProfileContext<MessageType: Message, ProfileConfigType: ProfileConfig> {
+interface ProfileContext<MessageType: Message> {
 
-    fun onShutdown(thread: ProfileThread<out MessageType, out ProfileConfigType>, profile: Profile<out MessageType, out ProfileConfigType>, exception: Throwable?)
+    fun onShutdown(thread: ProfileThread<out MessageType>, profile: Profile<out MessageType>, exception: Throwable?)
 
     fun enqueueWorkerTask(runnable: Runnable)
 
-    fun handleMessage(message: Message, profile: Profile<out MessageType, out ProfileConfigType>)
+    fun handleMessage(message: Message, profile: Profile<out MessageType>)
 
 }
