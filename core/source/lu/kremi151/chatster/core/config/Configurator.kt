@@ -26,7 +26,7 @@ class Configurator(
         private val pluginRegistry: PluginRegistry
 ) {
 
-    private val factories: MutableMap<Class<*>, FactoryEntry> = HashMap()
+    private val factories: MutableMap<Class<*>, MutableList<FactoryEntry>> = HashMap()
     private val primaryFactories: MutableMap<Class<*>, FactoryEntry> = HashMap()
     private val beans: MutableMap<Class<*>, Any> = HashMap()
 
@@ -36,12 +36,20 @@ class Configurator(
         }
     }
 
+    private fun addFactory(type: Class<*>, entry: FactoryEntry) {
+        var factoriesList = factories[type]
+        if (factoriesList == null) {
+            factoriesList = ArrayList()
+            factories[type] = factoriesList
+        }
+        factoriesList.add(entry)
+        factoriesList.sortBy { it.priority.ordinal }
+    }
+
     fun collectProviders(obj: Any) {
         val methods = obj.javaClass.declaredMethods
         for (method in methods) {
-            if (!method.isAnnotationPresent(Provider::class.java)) {
-                continue
-            }
+            val providerMeta = method.getAnnotation(Provider::class.java) ?: continue
             if (method.parameterCount != 0) {
                 throw IllegalStateException("Provider factory $method has ${method.parameterCount} parameters, but there should be none")
             }
@@ -51,20 +59,18 @@ class Configurator(
                 throw IllegalStateException("A provider for type $primaryType has already been defined, conflict between existing $previousDefinition and $method")
             }
 
-            val factoryEntry = FactoryEntry(obj, method)
+            val factoryEntry = FactoryEntry(obj, method, providerMeta.priority)
 
             primaryFactories[primaryType] = factoryEntry
-            factories[primaryType] = factoryEntry
+            addFactory(primaryType, factoryEntry)
 
             var type: Class<*>? = primaryType
             while (type != null) {
-                if (!primaryFactories.containsKey(type) && !factories.containsKey(type)) {
-                    factories[type] = factoryEntry
+                if (!primaryFactories.containsKey(type)) {
+                    addFactory(type, factoryEntry)
                 }
                 type = type.superclass
             }
-
-            // TODO: Use per-type lists of factory methods
         }
     }
 
@@ -103,8 +109,9 @@ class Configurator(
         // Create a bean if not already created
         fieldType = field.type
         while (fieldType != null) {
-            val factoryEntry = factories[fieldType]
-            if (factoryEntry != null) {
+            val factoryEntries = factories[fieldType]
+            if (factoryEntries != null && !factoryEntries.isEmpty()) {
+                val factoryEntry = factoryEntries.last()
                 val bean = factoryEntry.method.invoke(factoryEntry.holder)
                 beans[fieldType] = bean
                 field.set(obj, bean)

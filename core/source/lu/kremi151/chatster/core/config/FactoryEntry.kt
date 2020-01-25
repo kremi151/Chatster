@@ -16,9 +16,11 @@
 
 package lu.kremi151.chatster.core.config
 
+import lu.kremi151.chatster.api.enums.Priority
 import java.lang.reflect.Method
 
 data class FactoryEntry (
         val holder: Any,
-        val method: Method
+        val method: Method,
+        val priority: Priority
 )

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api.annotations
+package lu.kremi151.chatster.api.enums
 
-import lu.kremi151.chatster.api.enums.Priority
-import kotlin.annotation.Retention
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FUNCTION)
-annotation class Provider (
-        val priority: Priority = Priority.NORMAL
-)
+enum class Priority {
+    LOWEST,
+    LOW,
+    NORMAL,
+    HIGH,
+    HIGHEST
+}
