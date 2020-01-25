@@ -2,6 +2,7 @@ apply plugin: "application"
 
 repositories {
     jcenter()
+    maven { url "https://libraries.minecraft.net" }
 }
 
 mainClassName = 'lu.kremi151.chatster.server.ChatsterServer'

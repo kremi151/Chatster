@@ -2,6 +2,7 @@ apply plugin: "java-library"
 
 repositories {
     jcenter()
+    maven { url "https://libraries.minecraft.net" }
 }
 
 jar {
@@ -11,6 +12,7 @@ jar {
 dependencies {
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: libJacksonVersion
+    implementation group: 'com.mojang', name: 'brigadier', version: libBrigardierVersion
 
     api project(':api')
 
