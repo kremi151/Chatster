@@ -23,6 +23,7 @@ import java.lang.invoke.MethodHandles
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
 import lu.kremi151.chatster.core.config.Configurator
+import lu.kremi151.chatster.core.plugin.CorePlugin
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.io.File
@@ -52,6 +53,7 @@ open class Chatster {
         LOGGER.info("Loading plugins")
         var pluginsTime = System.currentTimeMillis()
         val pluginRegistry = PluginRegistry()
+        loadSystemPlugins(pluginRegistry)
         loadPlugins(pluginRegistry)
         pluginsTime = System.currentTimeMillis() - pluginsTime
         LOGGER.info("Loaded {} plugins in {} ms", pluginRegistry.size, pluginsTime)
@@ -79,7 +81,7 @@ open class Chatster {
     open val pluginsFolder: File get() = createFolderIfNotExists("plugins")
     open val configFolder: File get() = createFolderIfNotExists("config")
 
-    open fun loadPlugins(registry: PluginRegistry) {
+    protected open fun loadPlugins(registry: PluginRegistry) {
         val pluginsFolder = pluginsFolder
         val pluginJars = pluginsFolder.listFiles { _, name -> name.endsWith(".jar") }
         if (pluginJars == null || pluginJars.isEmpty()) {
@@ -105,6 +107,10 @@ open class Chatster {
         }
     }
 
+    protected open fun loadSystemPlugins(registry: PluginRegistry) {
+        registry.register(PluginRegistration(CorePlugin.ID, CorePlugin.NAME, CorePlugin()))
+    }
+
     private fun loadPlugin(pluginJar: File, pluginClassName: String): PluginRegistration {
         val childClassLoader = URLClassLoader(
                 arrayOf(pluginJar.toURI().toURL()),
@@ -119,7 +125,7 @@ open class Chatster {
         return PluginRegistration(meta.id, meta.name, plugin)
     }
 
-    open fun loadGlobalConfig() {
+    protected open fun loadGlobalConfig() {
         // TODO: Implement
     }
 
