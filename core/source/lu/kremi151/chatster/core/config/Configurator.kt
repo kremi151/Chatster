@@ -18,17 +18,22 @@ package lu.kremi151.chatster.core.config
 
 import lu.kremi151.chatster.api.annotations.Inject
 import lu.kremi151.chatster.api.annotations.Provider
+import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
 
 class Configurator(
         private val pluginRegistry: PluginRegistry
-) {
+): AutoConfigurator {
 
     private val factories: MutableMap<Class<*>, MutableList<FactoryEntry>> = HashMap()
     private val primaryFactories: MutableMap<Class<*>, FactoryEntry> = HashMap()
     private val beans: MutableMap<Class<*>, Any> = HashMap()
+
+    init {
+        beans[AutoConfigurator::class.java] = this
+    }
 
     fun collectPluginProviders() {
         // Scan plugins for providers and register plugins themselves as beans
@@ -56,6 +61,9 @@ class Configurator(
                 throw IllegalStateException("Provider factory $method has ${method.parameterCount} parameters, but there should be none")
             }
             val primaryType = method.returnType
+            if (AutoConfigurator::class.java.isAssignableFrom(primaryType)) {
+                throw IllegalStateException("Providers of type ${AutoConfigurator::class.java} cannot be manually defined")
+            }
             val previousDefinition = primaryFactories[primaryType]
             if (previousDefinition != null) {
                 throw IllegalStateException("A provider for type $primaryType has already been defined, conflict between existing $previousDefinition and $method")
@@ -82,7 +90,7 @@ class Configurator(
         }
     }
 
-    fun autoConfigure(obj: Any) {
+    override fun autoConfigure(obj: Any) {
         val fields = obj.javaClass.declaredFields
         for (field in fields) {
             if (!field.isAnnotationPresent(Inject::class.java)) {
