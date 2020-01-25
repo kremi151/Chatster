@@ -17,15 +17,24 @@
 package lu.kremi151.chatster.core.registry
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
+import java.lang.IllegalStateException
 
 class PluginRegistry {
 
     private var plugins: List<ChatsterPlugin> = emptyList()
+    private var idToPlugins: Map<String, PluginRegistration> = emptyMap()
 
+    @Synchronized
     fun register(plugin: PluginRegistration) {
+        val otherPlugin = idToPlugins[plugin.id]
+        if (otherPlugin != null) {
+            throw IllegalStateException("A plugin with id ${plugin.id} is already registered (Conflict between plugins \"${plugin.name}\" and \"${otherPlugin.name}\")")
+        }
+
         plugins = plugins.plus(plugin.plugin)
+        idToPlugins = idToPlugins.plus(Pair(plugin.id, plugin))
     }
 
-    val size get() = plugins.size
+    val size get() = idToPlugins.size
 
 }
