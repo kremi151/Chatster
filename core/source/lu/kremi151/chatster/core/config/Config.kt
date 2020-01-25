@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api
+package lu.kremi151.chatster.core.config
 
-interface ChatsterPlugin
+class Config {
+
+}

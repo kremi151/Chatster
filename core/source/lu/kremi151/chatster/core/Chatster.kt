@@ -20,7 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
-import lu.kremi151.chatster.api.ChatsterPlugin
+import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
