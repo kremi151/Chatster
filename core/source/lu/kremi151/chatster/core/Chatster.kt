@@ -35,6 +35,7 @@ import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import lu.kremi151.chatster.core.services.CommandDispatcherHolder
+import lu.kremi151.chatster.core.services.ConfidentialCredentialStore
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -165,8 +166,13 @@ open class Chatster {
     }
 
     @Provider
-    fun getCommandDispatcherHolder(): CommandDispatcherHolder {
+    fun createCommandDispatcherHolder(): CommandDispatcherHolder {
         return CommandDispatcherHolder(CommandDispatcher())
+    }
+
+    @Provider
+    fun createConfidentialCredentialStore(): ConfidentialCredentialStore {
+        return ConfidentialCredentialStore()
     }
 
 }
