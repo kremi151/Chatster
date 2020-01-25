@@ -22,6 +22,7 @@ import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
+import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.io.File
@@ -54,6 +55,14 @@ open class Chatster {
         loadPlugins(pluginRegistry)
         pluginsTime = System.currentTimeMillis() - pluginsTime
         LOGGER.info("Loaded {} plugins in {} ms", pluginRegistry.size, pluginsTime)
+
+        LOGGER.info("Configure plugins")
+        configTime = System.currentTimeMillis()
+        val configurator = Configurator(pluginRegistry)
+        configurator.collectPluginProviders()
+        configurator.autoConfigurePlugins()
+        configTime = System.currentTimeMillis() - configTime
+        LOGGER.info("Configured plugins in {} ms", configTime)
 
         initTime = System.currentTimeMillis() - initTime
         LOGGER.info("Initialized Chatster in {} ms", initTime)

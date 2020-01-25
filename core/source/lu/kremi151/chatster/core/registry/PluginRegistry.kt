@@ -21,7 +21,7 @@ import java.lang.IllegalStateException
 
 class PluginRegistry {
 
-    private var plugins: List<ChatsterPlugin> = emptyList()
+    private var pluginList: List<ChatsterPlugin> = emptyList()
     private var idToPlugins: Map<String, PluginRegistration> = emptyMap()
 
     @Synchronized
@@ -31,10 +31,11 @@ class PluginRegistry {
             throw IllegalStateException("A plugin with id ${plugin.id} is already registered (Conflict between plugins \"${plugin.name}\" and \"${otherPlugin.name}\")")
         }
 
-        plugins = plugins.plus(plugin.plugin)
+        pluginList = plugins.plus(plugin.plugin)
         idToPlugins = idToPlugins.plus(Pair(plugin.id, plugin))
     }
 
     val size get() = idToPlugins.size
+    val plugins get() = pluginList
 
 }
