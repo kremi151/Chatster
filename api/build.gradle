@@ -10,4 +10,5 @@ jar {
  
 dependencies {
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: libJacksonVersion
 }

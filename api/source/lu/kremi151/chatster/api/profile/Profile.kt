@@ -20,8 +20,9 @@ import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.util.Handler
 import java.io.File
 
-interface Profile<MessageType: Message> {
+interface Profile<MessageType: Message, ProfileConfigType: ProfileConfig> {
 
+    fun setup(config: ProfileConfigType)
     fun listenForMessages(handler: Handler<MessageType>)
 
     fun sendTextMessage(inboundMessage: MessageType, response: String)

@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.core.threading
+package lu.kremi151.chatster.api.profile
 
-import lu.kremi151.chatster.api.message.Message
-import lu.kremi151.chatster.api.profile.Profile
-import lu.kremi151.chatster.api.profile.ProfileConfig
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 
-interface ProfileContext<MessageType: Message, ProfileConfigType: ProfileConfig> {
-
-    fun onShutdown(thread: ProfileThread<out MessageType, out ProfileConfigType>, profile: Profile<out MessageType, out ProfileConfigType>, exception: Throwable?)
-
-    fun enqueueWorkerTask(runnable: Runnable)
-
-    fun handleMessage(message: Message, profile: Profile<out MessageType, out ProfileConfigType>)
-
-}
+open class ProfileConfig @JsonCreator constructor(
+        @JsonProperty val id: String,
+        @JsonProperty val className: String?
+)

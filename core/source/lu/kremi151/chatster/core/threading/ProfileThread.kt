@@ -18,14 +18,17 @@ package lu.kremi151.chatster.core.threading
 
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.profile.ProfileConfig
 
-class ProfileThread (
-        private val profile: Profile<out Message>,
-        private val context: ProfileContext
+class ProfileThread<MessageType: Message, ProfileConfigType: ProfileConfig> (
+        private val profile: Profile<MessageType, ProfileConfigType>,
+        private val config: ProfileConfigType,
+        private val context: ProfileContext<MessageType, ProfileConfig>
 ): Thread() {
 
     override fun run() {
         try {
+            profile.setup(config)
             profile.listenForMessages(this::handleInboundMessage)
             context.onShutdown(this, profile, null)
         } catch (t: Throwable) {
