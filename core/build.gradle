@@ -5,9 +5,11 @@ repositories {
 }
 
 jar {
-    archiveClassifier = "api"
+    archiveClassifier = "core"
 }
  
 dependencies {
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
+
+    compileOnly group: 'org.slf4j', name: 'slf4j-api', version: libSlf4jVersion
 }

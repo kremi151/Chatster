@@ -4,10 +4,23 @@ repositories {
     jcenter()
 }
 
+mainClassName = 'lu.kremi151.chatster.server.ChatsterServer'
+
 jar {
     archiveClassifier = "server"
+
+    manifest {
+        attributes 'Main-Class': "${mainClassName}Kt"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
  
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: libLog4jVersion
+
+    implementation project(':core')
 }
