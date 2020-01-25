@@ -1,0 +1,13 @@
+apply plugin: "application"
+
+repositories {
+    jcenter()
+}
+
+jar {
+    archiveClassifier = "server"
+}
+ 
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
