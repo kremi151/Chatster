@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.core.threading
+package lu.kremi151.chatster.core.context
 
+import lu.kremi151.chatster.api.context.CommandContext
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.Profile
-import lu.kremi151.chatster.core.context.ProfileContext
+import java.io.File
 
-class ProfileThread<MessageType: Message> (
-        val profile: Profile,
-        private val context: ProfileContext<MessageType>
-): Thread() {
+class CommandContextImpl(
+        private val inboundMessage: Message,
+        private val profile: Profile
+): CommandContext {
 
-    override fun run() {
-        try {
-            profile.setup()
-            profile.listenForMessages(this::handleInboundMessage)
-            context.onShutdown(this, profile, null)
-        } catch (t: Throwable) {
-            context.onShutdown(this, profile, t)
-        }
+    override fun sendTextMessage(message: String) {
+        profile.sendTextMessage(inboundMessage, message)
     }
 
-    private fun handleInboundMessage(message: Message) {
-        context.enqueueWorkerTask(Runnable {
-            context.handleMessage(message, profile)
-        })
+    override fun sendTextMessage(file: File) {
+        profile.sendTextMessage(inboundMessage, file)
+    }
+
+    override fun sendTextMessage(message: String, file: File) {
+        profile.sendTextMessage(inboundMessage, message, file)
+    }
+
+    override fun sendWriting(started: Boolean) {
+        profile.sendWritingStatus(inboundMessage, started)
     }
 
 }

@@ -20,18 +20,19 @@ import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.util.Handler
 import java.io.File
 
-interface Profile<MessageType: Message> {
+interface Profile {
 
     var id: String
 
     fun setup()
-    fun listenForMessages(handler: Handler<MessageType>)
+    fun listenForMessages(handler: Handler<Message>)
 
-    fun sendTextMessage(inboundMessage: MessageType, response: String)
-    fun sendTextMessage(inboundMessage: MessageType, file: File)
+    fun sendTextMessage(inboundMessage: Message, response: String)
+    fun sendTextMessage(inboundMessage: Message, file: File)
+    fun sendTextMessage(inboundMessage: Message, response: String, file: File)
 
-    fun sendWritingStatus(inboundMessage: MessageType, startedWriting: Boolean)
+    fun sendWritingStatus(inboundMessage: Message, startedWriting: Boolean)
 
-    fun acknowledgeMessage(inboundMessage: MessageType)
+    fun acknowledgeMessage(inboundMessage: Message)
 
 }

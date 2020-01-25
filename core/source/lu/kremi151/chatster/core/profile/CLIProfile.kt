@@ -27,7 +27,7 @@ import java.lang.invoke.MethodHandles
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class CLIProfile: Profile<Message> {
+class CLIProfile: Profile {
 
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
@@ -54,6 +54,11 @@ class CLIProfile: Profile<Message> {
 
     override fun sendTextMessage(inboundMessage: Message, file: File) {
         System.out.println("[File] ${file.absolutePath} (${file.length()} bytes)")
+    }
+
+    override fun sendTextMessage(inboundMessage: Message, response: String, file: File) {
+        sendTextMessage(inboundMessage, response)
+        sendTextMessage(inboundMessage, file)
     }
 
     override fun sendWritingStatus(inboundMessage: Message, startedWriting: Boolean) {

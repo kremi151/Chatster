@@ -18,6 +18,6 @@ package lu.kremi151.chatster.api.message
 
 interface Message {
 
-    val message: String
+    val message: String?
 
 }

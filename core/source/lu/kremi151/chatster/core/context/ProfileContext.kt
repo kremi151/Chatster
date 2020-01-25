@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.core.threading
+package lu.kremi151.chatster.core.context
 
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.core.threading.ProfileThread
 
 interface ProfileContext<MessageType: Message> {
 
-    fun onShutdown(thread: ProfileThread<out MessageType>, profile: Profile<out MessageType>, exception: Throwable?)
+    fun onShutdown(thread: ProfileThread<out MessageType>, profile: Profile, exception: Throwable?)
 
     fun enqueueWorkerTask(runnable: Runnable)
 
-    fun handleMessage(message: Message, profile: Profile<out MessageType>)
+    fun handleMessage(message: Message, profile: Profile)
 
 }
