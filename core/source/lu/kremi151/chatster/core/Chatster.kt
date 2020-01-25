@@ -21,11 +21,24 @@ import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.ChatsterPlugin
+import lu.kremi151.chatster.api.annotations.Plugin
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.net.URLClassLoader
+import java.util.jar.JarInputStream
 
 open class Chatster {
 
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
+
+        private val MANIFEST_PLUGIN_SCAN_PACKAGE = "Chatster-Scan-Package"
     }
 
     fun launch() {
@@ -49,12 +62,71 @@ open class Chatster {
         LOGGER.info("Initialized Chatster in {} ms", initTime)
     }
 
+    private fun createFolderIfNotExists(path: String): File {
+        val folder = File(path)
+        if (!folder.exists() && !folder.mkdirs()) {
+            throw IOException("Could not create folder at $folder")
+        }
+        return folder
+    }
+
+    open val pluginsFolder: File get() = createFolderIfNotExists("plugins")
+
     open fun loadPlugins(outPlugins: MutableList<ChatsterPlugin>) {
-        // TODO: Implement
+        val pluginsFolder = pluginsFolder
+        val pluginJars = pluginsFolder.listFiles { _, name -> name.endsWith(".jar") }
+        if (pluginJars == null || pluginJars.isEmpty()) {
+            return
+        }
+        for (pluginJar in pluginJars) {
+            var scanPackage: String? = null
+            JarInputStream(FileInputStream(pluginJar)).use { jarStream ->
+                val manifest = jarStream.manifest
+                val attributes = manifest.mainAttributes
+                scanPackage = attributes.getValue(MANIFEST_PLUGIN_SCAN_PACKAGE)
+            }
+            if (scanPackage == null || scanPackage!!.isBlank()) {
+                continue
+            }
+            loadPlugin(pluginJar, scanPackage!!, outPlugins)
+        }
+    }
+
+    private fun loadPlugin(pluginJar: File, scanPackage: String, outPlugins: MutableList<ChatsterPlugin>) {
+        val childClassLoader = URLClassLoader(
+                arrayOf(pluginJar.toURI().toURL()),
+                javaClass.classLoader
+        )
+        scanPackageForPluginDefinitions(scanPackage, childClassLoader, outPlugins)
+    }
+
+    private fun scanPackageForPluginDefinitions(packageName: String, classLoader: ClassLoader, outPlugins: MutableList<ChatsterPlugin>) {
+        val urls = ClasspathHelper.forPackage(packageName, classLoader)
+        val reflections = Reflections(ConfigurationBuilder.build().setUrls(urls)
+                .addClassLoaders(classLoader).addScanners(SubTypesScanner(), TypeAnnotationsScanner()))
+        val classes = reflections.getTypesAnnotatedWith(Plugin::class.java)
+        for (clazz in classes) {
+            if (!ChatsterPlugin::class.java.isAssignableFrom(clazz)) {
+                LOGGER.warn("Plugin class {} does not extend {}, skipping", clazz.name, ChatsterPlugin::class.java.name)
+                continue
+            }
+            val meta = clazz.getAnnotation(Plugin::class.java)
+            if (meta == null) {
+                LOGGER.warn("Plugin class {} is not annotated with {}, skipping", clazz.name, Plugin::class.java.name)
+                continue
+            }
+            try {
+                val plugin = clazz.getConstructor().newInstance() as ChatsterPlugin
+                outPlugins.add(plugin)
+                LOGGER.info("Loaded plugin {} ({})", meta.name, meta.id)
+            } catch (e: Exception) {
+                throw IOException("Could not load plugin", e)
+            }
+        }
     }
 
     open fun loadGlobalConfig() {
-
+        // TODO: Implement
     }
 
 }
