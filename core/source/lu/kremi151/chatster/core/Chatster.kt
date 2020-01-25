@@ -20,14 +20,41 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
-class Chatster {
+import lu.kremi151.chatster.api.ChatsterPlugin
+
+open class Chatster {
 
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
     }
 
     fun launch() {
-        LOGGER.info("Launching Chatster")
+        LOGGER.info("Initializing Chatster")
+        var initTime = System.currentTimeMillis()
+
+        LOGGER.info("Loading configuration")
+        var configTime = System.currentTimeMillis()
+        loadGlobalConfig()
+        configTime = System.currentTimeMillis() - configTime
+        LOGGER.info("Loaded configuration in {} ms", configTime)
+
+        LOGGER.info("Loading plugins")
+        var pluginsTime = System.currentTimeMillis()
+        val plugins = ArrayList<ChatsterPlugin>()
+        loadPlugins(plugins)
+        pluginsTime = System.currentTimeMillis() - pluginsTime
+        LOGGER.info("Loaded {} plugins in {} ms", plugins.size, pluginsTime)
+
+        initTime = System.currentTimeMillis() - initTime
+        LOGGER.info("Initialized Chatster in {} ms", initTime)
+    }
+
+    open fun loadPlugins(outPlugins: MutableList<ChatsterPlugin>) {
+        // TODO: Implement
+    }
+
+    open fun loadGlobalConfig() {
+
     }
 
 }
