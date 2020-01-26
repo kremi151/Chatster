@@ -92,6 +92,7 @@ open class Chatster {
         val configurator = Configurator(pluginRegistry)
         configurator.collectProviders(this)
         configurator.collectPluginProviders()
+        configurator.initializeBeans()
         configurator.autoConfigurePlugins()
         configurator.autoConfigure(this)
         configTime = System.currentTimeMillis() - configTime

@@ -18,6 +18,7 @@ package lu.kremi151.chatster.core.config
 
 import lu.kremi151.chatster.api.annotations.Inject
 import lu.kremi151.chatster.api.annotations.Provider
+import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.lang.IllegalStateException
@@ -28,18 +29,17 @@ class Configurator(
 ): AutoConfigurator {
 
     private val factories: MutableMap<Class<*>, MutableList<FactoryEntry>> = HashMap()
-    private val primaryFactories: MutableMap<Class<*>, FactoryEntry> = HashMap()
     private val beans: MutableMap<Class<*>, Any> = HashMap()
 
     init {
-        beans[AutoConfigurator::class.java] = this
+        beans[AutoConfigurator::class.java] = arrayListOf(BeanEntry(this, Priority.HIGHEST))
     }
 
     fun collectPluginProviders() {
         // Scan plugins for providers and register plugins themselves as beans
         for (plugin in pluginRegistry.plugins) {
             collectProviders(plugin)
-            beans[plugin.javaClass] = plugin
+            beans[plugin.javaClass] = arrayListOf(BeanEntry(this, Priority.HIGHEST))
         }
     }
 
@@ -64,22 +64,37 @@ class Configurator(
             if (AutoConfigurator::class.java.isAssignableFrom(primaryType)) {
                 throw IllegalStateException("Providers of type ${AutoConfigurator::class.java} cannot be manually defined")
             }
-            val previousDefinition = primaryFactories[primaryType]
-            if (previousDefinition != null) {
-                throw IllegalStateException("A provider for type $primaryType has already been defined, conflict between existing $previousDefinition and $method")
-            }
 
             val factoryEntry = FactoryEntry(obj, method, providerMeta.priority)
-
-            primaryFactories[primaryType] = factoryEntry
-            addFactory(primaryType, factoryEntry)
-
             var type: Class<*>? = primaryType
             while (type != null) {
-                if (!primaryFactories.containsKey(type)) {
-                    addFactory(type, factoryEntry)
-                }
+                addFactory(type, factoryEntry)
                 type = type.superclass
+            }
+        }
+    }
+
+    fun initializeBeans() {
+        val factoryForTypes = HashMap<FactoryEntry, MutableList<Class<*>>>()
+        for (entry in factories) {
+            val requestingType = entry.key
+            val factories = entry.value
+            if (factories.isEmpty()) {
+                continue
+            }
+            var requestingTypes = factoryForTypes[factories.last()]
+            if (requestingTypes == null) {
+                requestingTypes = ArrayList()
+                factoryForTypes[factories.last()] = requestingTypes
+            }
+            requestingTypes.add(requestingType)
+        }
+        for (entry in factoryForTypes) {
+            val factoryEntry = entry.key
+            val requestingTypes = entry.value
+            val bean = factoryEntry.method.invoke(factoryEntry.holder)
+            for (requestingType in requestingTypes) {
+                beans[requestingType] = bean
             }
         }
     }
@@ -105,7 +120,6 @@ class Configurator(
     private fun autoConfigureField(obj: Any, field: Field) {
         field.isAccessible = true
 
-        // Check if we already created a bean
         var fieldType: Class<*>? = field.type
         while (fieldType != null) {
             val bean = beans[fieldType]
@@ -116,22 +130,9 @@ class Configurator(
             fieldType = fieldType.superclass
         }
 
-        // Create a bean if not already created
-        fieldType = field.type
-        while (fieldType != null) {
-            val factoryEntries = factories[fieldType]
-            if (factoryEntries != null && !factoryEntries.isEmpty()) {
-                val factoryEntry = factoryEntries.last()
-                val bean = factoryEntry.method.invoke(factoryEntry.holder)
-                beans[fieldType] = bean
-                autoConfigure(bean)
-                field.set(obj, bean)
-                return
-            }
-            fieldType = fieldType.superclass
-        }
-
         throw IllegalStateException("Could not inject value at $field")
     }
+
+    private data class BeanEntry(val bean: Any, val priority: Priority)
 
 }
