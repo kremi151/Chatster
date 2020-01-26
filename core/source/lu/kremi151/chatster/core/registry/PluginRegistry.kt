@@ -43,6 +43,12 @@ class PluginRegistry {
         }
     }
 
+    fun initializePlugins() {
+        for (plugin in idToPlugins.entries) {
+            plugin.value.plugin.onLoad()
+        }
+    }
+
     val size get() = idToPlugins.size
     val plugins get() = pluginList
 

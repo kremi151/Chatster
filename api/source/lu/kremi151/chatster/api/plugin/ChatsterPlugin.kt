@@ -21,6 +21,8 @@ import lu.kremi151.chatster.api.util.Handler
 
 abstract class ChatsterPlugin {
 
+    open fun onLoad() {}
+
     open fun onRegisterCommands(register: Handler<CommandProvider>) {}
 
 }

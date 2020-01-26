@@ -97,6 +97,12 @@ open class Chatster {
         configTime = System.currentTimeMillis() - configTime
         LOGGER.info("Configured plugins in {} ms", configTime)
 
+        LOGGER.info("Initialize plugins")
+        pluginsTime = System.currentTimeMillis()
+        pluginRegistry.initializePlugins()
+        pluginsTime = System.currentTimeMillis() - pluginsTime
+        LOGGER.info("Initialized plugins in {} ms", pluginsTime)
+
         LOGGER.info("Setting up commands")
         var commandsTime = System.currentTimeMillis()
         val commandsList = ArrayList<CommandRegistration>()
