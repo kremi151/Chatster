@@ -120,14 +120,46 @@ class Configurator(
     private fun autoConfigureField(obj: Any, field: Field) {
         field.isAccessible = true
 
-        var fieldType: Class<*>? = field.type
-        while (fieldType != null) {
-            val bean = beans[fieldType]
+        // Check if we have a direct match
+        val directMatch = beans[field.type]
+        if (directMatch != null) {
+            field.set(obj, directMatch)
+            return
+        }
+
+        // Check for the closest match
+        val candidates = HashMap<Class<*>, Int>()
+        for (bean in beans) {
+            if (!field.type.isAssignableFrom(bean.key)) {
+                continue
+            }
+            var distance = 0
+            var type: Class<*>? = bean.key
+            while (type != null) {
+                if (type == bean.key) {
+                    break
+                }
+                distance++
+                type = type.superclass
+            }
+            candidates[bean.key] = distance
+        }
+        if (!candidates.isEmpty()) {
+            var minDistance = Int.MAX_VALUE
+            var bean: Any? = null
+            for (candidate in candidates) {
+                val candidateDistance = candidate.value
+                if (candidateDistance < minDistance) {
+                    minDistance = candidateDistance
+                    bean = beans[candidate.key]
+                }
+            }
             if (bean != null) {
                 field.set(obj, bean)
+                // Cache result for quicker lookup
+                beans[field.type] = bean
                 return
             }
-            fieldType = fieldType.superclass
         }
 
         throw IllegalStateException("Could not inject value at $field")
