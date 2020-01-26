@@ -121,45 +121,33 @@ class Configurator(
         field.isAccessible = true
 
         // Check if we have a direct match
-        val directMatch = beans[field.type]
-        if (directMatch != null) {
-            field.set(obj, directMatch)
+        var match = beans[field.type]
+        if (match != null) {
+            field.set(obj, match)
             return
         }
 
-        // Check for the closest match
-        val candidates = HashMap<Class<*>, Int>()
+        // Scan through the existing beans and find the one with the highest priority
+        var maxPriority: Priority? = null
         for (bean in beans) {
             if (!field.type.isAssignableFrom(bean.key)) {
                 continue
             }
-            var distance = 0
-            var type: Class<*>? = bean.key
-            while (type != null) {
-                if (type == bean.key) {
-                    break
-                }
-                distance++
-                type = type.superclass
+            val factoryEntry = factories[bean.key] ?: continue
+            if (factoryEntry.isEmpty()) {
+                continue
             }
-            candidates[bean.key] = distance
+            val highestPriorityEntry = factoryEntry.last()
+            if (maxPriority == null || maxPriority.ordinal < highestPriorityEntry.priority.ordinal) {
+                maxPriority = highestPriorityEntry.priority
+                match = bean.value
+            }
         }
-        if (!candidates.isEmpty()) {
-            var minDistance = Int.MAX_VALUE
-            var bean: Any? = null
-            for (candidate in candidates) {
-                val candidateDistance = candidate.value
-                if (candidateDistance < minDistance) {
-                    minDistance = candidateDistance
-                    bean = beans[candidate.key]
-                }
-            }
-            if (bean != null) {
-                field.set(obj, bean)
-                // Cache result for quicker lookup
-                beans[field.type] = bean
-                return
-            }
+        if (match != null) {
+            field.set(obj, match)
+            // Cache result for quicker lookup
+            beans[field.type] = match
+            return
         }
 
         throw IllegalStateException("Could not inject value at $field")
