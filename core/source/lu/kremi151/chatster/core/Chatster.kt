@@ -29,14 +29,14 @@ import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.command.CommandRegistry
 import lu.kremi151.chatster.api.command.LiteralCommandBuilder
 import lu.kremi151.chatster.api.message.Message
-import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
 import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
 import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.core.context.CommandContextImpl
 import lu.kremi151.chatster.core.context.ProfileContext
 import lu.kremi151.chatster.core.plugin.CorePlugin
-import lu.kremi151.chatster.core.profile.CLIProfile
+import lu.kremi151.chatster.core.profile.CLIProfileLauncher
 import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
@@ -127,7 +127,7 @@ open class Chatster {
 
         LOGGER.info("Loading profiles")
         var profileTime = System.currentTimeMillis()
-        val profiles = ArrayList<Profile>()
+        val profiles = ArrayList<ProfileLauncher>()
         loadProfiles(configurator, profiles)
         profileTime = System.currentTimeMillis() - profileTime
         LOGGER.info("Loaded {} profiles in {} ms", profiles.size, profileTime)
@@ -204,7 +204,7 @@ open class Chatster {
         // TODO: Implement
     }
 
-    protected open fun loadProfiles(configurator: Configurator, outProfiles: MutableList<Profile>) {
+    protected open fun loadProfiles(configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
         val profilesFolder = this.profilesFolder
         val subfolders = profilesFolder.listFiles { file -> file.isDirectory && file.canRead() }
         if (subfolders == null || subfolders.isEmpty()) {
@@ -218,14 +218,14 @@ open class Chatster {
             val jsonNode = FileInputStream(profileFile).use { inputStream -> objectMapper.readTree(inputStream) }
             val classNameNode = jsonNode.get("className")
             val className = if (classNameNode == null || classNameNode.isNull) null else classNameNode.asText(null)
-            var clazz: Class<out Profile>
+            var clazz: Class<out ProfileLauncher>
             if (className == null || className.isBlank()) {
-                LOGGER.warn("Profile at $profileFile does not specify a className, using default one")
-                clazz = CLIProfile::class.java
+                LOGGER.warn("ProfileLauncher at $profileFile does not specify a className, using default one")
+                clazz = CLIProfileLauncher::class.java
             } else {
                 try {
                     @Suppress("UNCHECKED_CAST")
-                    clazz = Class.forName(className) as Class<out Profile>
+                    clazz = Class.forName(className) as Class<out ProfileLauncher>
                 } catch (e: Exception) {
                     LOGGER.warn("Could not load profile from $profileFile", e)
                     continue
@@ -237,7 +237,7 @@ open class Chatster {
         }
     }
 
-    private fun launchProfile(profile: Profile) {
+    private fun launchProfile(profile: ProfileLauncher) {
         if (this.stopping) {
             throw IllegalStateException("Chatster is stopping, it cannot launch any more profiles")
         }
@@ -252,17 +252,17 @@ open class Chatster {
         }
     }
 
-    protected open fun onProfileTerminated(profile: Profile, exception: Throwable?, numStillRunning: Int) {
+    protected open fun onProfileTerminated(profile: ProfileLauncher, exception: Throwable?, numStillRunning: Int) {
         // TODO: Implement
     }
 
     private val profileContext = object : ProfileContext<Message> {
 
-        override fun onShutdown(thread: ProfileThread<out Message>, profile: Profile, exception: Throwable?) {
+        override fun onShutdown(thread: ProfileThread<out Message>, profile: ProfileLauncher, exception: Throwable?) {
             if (exception == null) {
-                LOGGER.warn("Profile thread {} has shutdown in an usual manner", profile.id)
+                LOGGER.warn("ProfileLauncher thread {} has shutdown in an usual manner", profile.id)
             } else {
-                LOGGER.warn("Profile thread {} has crashed", profile.id, exception)
+                LOGGER.warn("ProfileLauncher thread {} has crashed", profile.id, exception)
             }
             val profileThreadsRunning: Int
             synchronized(runningProfiles) {
@@ -276,7 +276,7 @@ open class Chatster {
             workerExecutor.submit(runnable)
         }
 
-        override fun handleMessage(message: Message, profile: Profile) {
+        override fun handleMessage(message: Message, profile: ProfileLauncher) {
             var text = message.message
             if (text == null || !text.startsWith("!")) {
                 return

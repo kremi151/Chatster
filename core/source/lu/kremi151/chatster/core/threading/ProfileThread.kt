@@ -17,11 +17,11 @@
 package lu.kremi151.chatster.core.threading
 
 import lu.kremi151.chatster.api.message.Message
-import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.context.ProfileContext
 
 class ProfileThread<MessageType: Message> (
-        val profile: Profile,
+        val profile: ProfileLauncher,
         private val context: ProfileContext<MessageType>
 ): Thread() {
 

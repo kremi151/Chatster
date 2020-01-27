@@ -18,7 +18,7 @@ package lu.kremi151.chatster.core.profile
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import lu.kremi151.chatster.api.message.Message
-import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.api.util.Handler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,7 +27,7 @@ import java.lang.invoke.MethodHandles
 import java.util.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-class CLIProfile: Profile {
+class CLIProfileLauncher: ProfileLauncher {
 
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
@@ -39,11 +39,11 @@ class CLIProfile: Profile {
         LOGGER.info("Using $javaClass for profile $id. This should only be used for testing purposes.")
     }
 
-    override fun listenForMessages(handler: Handler<Message>) {
+    override fun listenForMessages(handleMessage: Handler<Message>) {
         Scanner(System.`in`).use { scanner ->
             while (true) {
                 val line = scanner.nextLine()
-                handler(CLIMessage(line))
+                handleMessage(CLIMessage(line))
             }
         }
     }

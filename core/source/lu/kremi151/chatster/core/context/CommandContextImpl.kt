@@ -18,12 +18,12 @@ package lu.kremi151.chatster.core.context
 
 import lu.kremi151.chatster.api.context.CommandContext
 import lu.kremi151.chatster.api.message.Message
-import lu.kremi151.chatster.api.profile.Profile
+import lu.kremi151.chatster.api.profile.ProfileLauncher
 import java.io.File
 
 class CommandContextImpl(
         private val inboundMessage: Message,
-        private val profile: Profile
+        private val profile: ProfileLauncher
 ): CommandContext {
 
     override fun sendTextMessage(message: String) {
