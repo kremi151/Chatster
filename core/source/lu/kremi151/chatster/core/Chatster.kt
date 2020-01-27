@@ -242,7 +242,8 @@ open class Chatster {
             throw IllegalStateException("Chatster is stopping, it cannot launch any more profiles")
         }
         try {
-            val botProfile = ProfileThread(profile, profileContext)
+            val profileFolder = File(profilesFolder, profile.id)
+            val botProfile = ProfileThread(profile, profileFolder, profileContext)
             synchronized(runningProfiles) {
                 runningProfiles.add(botProfile)
                 botProfile.start()

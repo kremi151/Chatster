@@ -35,7 +35,7 @@ class CLIProfileLauncher: ProfileLauncher {
 
     override var id: String = ""
 
-    override fun setup() {
+    override fun setup(folder: File) {
         LOGGER.info("Using $javaClass for profile $id. This should only be used for testing purposes.")
     }
 

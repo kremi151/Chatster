@@ -24,7 +24,7 @@ interface ProfileLauncher {
 
     var id: String
 
-    fun setup()
+    fun setup(folder: File)
     fun listenForMessages(handleMessage: Handler<Message>)
 
     fun sendTextMessage(inboundMessage: Message, response: String)
