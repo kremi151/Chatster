@@ -14,6 +14,7 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: libJacksonVersion
     implementation group: 'com.mojang', name: 'brigadier', version: libBrigardierVersion
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: libOkHttpVersion
+    implementation group: 'com.squareup.okhttp3', name: 'okhttp-urlconnection', version: libOkHttpVersion
 
     api project(':api')
 
