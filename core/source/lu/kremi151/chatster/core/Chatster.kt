@@ -28,6 +28,7 @@ import lu.kremi151.chatster.api.annotations.Plugin
 import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.command.CommandRegistry
 import lu.kremi151.chatster.api.command.LiteralCommandBuilder
+import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
@@ -41,7 +42,7 @@ import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import lu.kremi151.chatster.core.services.CommandDispatcherHolder
-import lu.kremi151.chatster.core.services.ConfidentialCredentialStore
+import lu.kremi151.chatster.core.services.PlaintextCredentialStore
 import lu.kremi151.chatster.core.threading.ProfileThread
 import lu.kremi151.chatster.core.threading.RunningProfilesState
 import java.io.File
@@ -304,9 +305,9 @@ open class Chatster {
         return CommandDispatcherHolder(CommandDispatcher())
     }
 
-    @Provider
-    fun createConfidentialCredentialStore(): ConfidentialCredentialStore {
-        return ConfidentialCredentialStore()
+    @Provider(priority = Priority.LOWEST)
+    fun createPlaintextCredentialStore(): PlaintextCredentialStore {
+        return PlaintextCredentialStore()
     }
 
     @Provider

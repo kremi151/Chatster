@@ -17,13 +17,10 @@
 package lu.kremi151.chatster.core.plugin
 
 import lu.kremi151.chatster.api.annotations.Plugin
-import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.command.CommandProvider
-import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.util.Handler
 import lu.kremi151.chatster.core.plugin.command.CommandProviderHelp
-import lu.kremi151.chatster.core.services.PlaintextStreamHandler
 
 @Plugin(id = CorePlugin.ID, name = CorePlugin.NAME)
 class CorePlugin: ChatsterPlugin() {
@@ -31,11 +28,6 @@ class CorePlugin: ChatsterPlugin() {
     companion object {
         const val ID = "chatster"
         const val NAME = "Chatster core plugin"
-    }
-
-    @Provider(priority = Priority.LOWEST)
-    fun plainTextStreamHandler(): PlaintextStreamHandler {
-        return PlaintextStreamHandler()
     }
 
     override fun onRegisterCommands(register: Handler<CommandProvider>) {
