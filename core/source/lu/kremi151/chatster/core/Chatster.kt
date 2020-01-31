@@ -225,14 +225,19 @@ open class Chatster {
             val className = if (classNameNode == null || classNameNode.isNull) null else classNameNode.asText(null)
             var clazz: Class<out ProfileLauncher>
             if (className == null || className.isBlank()) {
-                LOGGER.warn("ProfileLauncher at $profileFile does not specify a className, using default one")
+                LOGGER.warn("ProfileLauncher at {} does not specify a className, using default one", profileFile)
                 clazz = CLIProfileLauncher::class.java
             } else {
                 try {
+                    val loadedClass = Class.forName(className, true, classLoader)
+                    if (!ProfileLauncher::class.java.isAssignableFrom(loadedClass)) {
+                        LOGGER.warn("Profile defined in {} does not use an implementation of {}, skipping", profileFile, ProfileLauncher::class.java.name)
+                        continue
+                    }
                     @Suppress("UNCHECKED_CAST")
-                    clazz = Class.forName(className, true, classLoader) as Class<out ProfileLauncher>
+                    clazz = loadedClass as Class<out ProfileLauncher>
                 } catch (e: Exception) {
-                    LOGGER.warn("Could not load profile from $profileFile", e)
+                    LOGGER.warn("Could not load profile from {}", profileFile, e)
                     continue
                 }
             }
