@@ -47,7 +47,9 @@ import lu.kremi151.chatster.core.threading.RunningProfilesState
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.net.URL
 import java.net.URLClassLoader
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.jar.JarInputStream
 
@@ -162,6 +164,8 @@ open class Chatster {
         if (pluginJars == null || pluginJars.isEmpty()) {
             return
         }
+        val urls = ArrayList<URL>()
+        val classNamesToLoad = ArrayList<String>()
         for (pluginJar in pluginJars) {
             var pluginClassName: String? = null
             JarInputStream(FileInputStream(pluginJar)).use { jarStream ->
@@ -172,13 +176,17 @@ open class Chatster {
             if (pluginClassName == null || pluginClassName!!.isBlank()) {
                 continue
             }
-            try {
-                val registration = loadPlugin(pluginJar, pluginClassName!!)
-                registry.register(registration)
-                LOGGER.info("Loaded plugin {} ({})", registration.name, registration.id)
-            } catch (e: Exception) {
-                LOGGER.warn("An error occurred while loading plugin at {}, skipping", pluginJar, e)
-            }
+            urls.add(pluginJar.toURI().toURL())
+            classNamesToLoad.add(pluginClassName!!)
+        }
+        val childClassLoader = URLClassLoader(
+                urls.toTypedArray(),
+                javaClass.classLoader
+        )
+        for (className in classNamesToLoad) {
+            val registration = loadPlugin(childClassLoader, className)
+            registry.register(registration)
+            LOGGER.info("Loaded plugin {} ({})", registration.name, registration.id)
         }
     }
 
@@ -186,12 +194,8 @@ open class Chatster {
         registry.register(PluginRegistration(CorePlugin.ID, CorePlugin.NAME, CorePlugin()))
     }
 
-    private fun loadPlugin(pluginJar: File, pluginClassName: String): PluginRegistration {
-        val childClassLoader = URLClassLoader(
-                arrayOf(pluginJar.toURI().toURL()),
-                javaClass.classLoader
-        )
-        val clazz = Class.forName(pluginClassName, true, childClassLoader)
+    private fun loadPlugin(classLoader: ClassLoader, pluginClassName: String): PluginRegistration {
+        val clazz = Class.forName(pluginClassName, true, classLoader)
         if (!ChatsterPlugin::class.java.isAssignableFrom(clazz)) {
             throw IOException("Plugin class " + clazz.name + " does is no sub class of " + ChatsterPlugin::class.java.name)
         }
