@@ -39,6 +39,7 @@ class ProfileThread<MessageType: Message> (
 
     private fun handleInboundMessage(message: Message) {
         context.enqueueWorkerTask(Runnable {
+            profile.acknowledgeMessage(message)
             context.handleMessage(message, profile)
         })
     }
