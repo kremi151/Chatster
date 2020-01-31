@@ -85,7 +85,7 @@ open class Chatster {
         var pluginsTime = System.currentTimeMillis()
         val pluginRegistry = PluginRegistry()
         loadSystemPlugins(pluginRegistry)
-        loadPlugins(pluginRegistry)
+        val pluginClassLoader = loadPlugins(pluginRegistry)
         pluginsTime = System.currentTimeMillis() - pluginsTime
         LOGGER.info("Loaded {} plugins in {} ms", pluginRegistry.size, pluginsTime)
 
@@ -130,7 +130,7 @@ open class Chatster {
         LOGGER.info("Loading profiles")
         var profileTime = System.currentTimeMillis()
         val profiles = ArrayList<ProfileLauncher>()
-        loadProfiles(configurator, profiles)
+        loadProfiles(pluginClassLoader, configurator, profiles)
         profileTime = System.currentTimeMillis() - profileTime
         LOGGER.info("Loaded {} profiles in {} ms", profiles.size, profileTime)
 
@@ -158,11 +158,11 @@ open class Chatster {
     open val configFolder: File get() = createFolderIfNotExists("config")
     open val profilesFolder: File get() = createFolderIfNotExists("profiles")
 
-    protected open fun loadPlugins(registry: PluginRegistry) {
+    protected open fun loadPlugins(registry: PluginRegistry): ClassLoader {
         val pluginsFolder = pluginsFolder
         val pluginJars = pluginsFolder.listFiles { _, name -> name.endsWith(".jar") }
         if (pluginJars == null || pluginJars.isEmpty()) {
-            return
+            return javaClass.classLoader
         }
         val urls = ArrayList<URL>()
         val classNamesToLoad = ArrayList<String>()
@@ -188,6 +188,7 @@ open class Chatster {
             registry.register(registration)
             LOGGER.info("Loaded plugin {} ({})", registration.name, registration.id)
         }
+        return childClassLoader
     }
 
     protected open fun loadSystemPlugins(registry: PluginRegistry) {
@@ -208,7 +209,7 @@ open class Chatster {
         // TODO: Implement
     }
 
-    protected open fun loadProfiles(configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
+    protected open fun loadProfiles(classLoader: ClassLoader, configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
         val profilesFolder = this.profilesFolder
         val subfolders = profilesFolder.listFiles { file -> file.isDirectory && file.canRead() }
         if (subfolders == null || subfolders.isEmpty()) {
@@ -229,7 +230,7 @@ open class Chatster {
             } else {
                 try {
                     @Suppress("UNCHECKED_CAST")
-                    clazz = Class.forName(className) as Class<out ProfileLauncher>
+                    clazz = Class.forName(className, true, classLoader) as Class<out ProfileLauncher>
                 } catch (e: Exception) {
                     LOGGER.warn("Could not load profile from $profileFile", e)
                     continue
