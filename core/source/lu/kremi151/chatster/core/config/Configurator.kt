@@ -23,6 +23,7 @@ import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
+import java.lang.reflect.Proxy
 import java.util.stream.Collectors
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -73,7 +74,7 @@ class Configurator(
                 throw IllegalStateException("Providers of type ${AutoConfigurator::class.java} cannot be manually defined")
             }
 
-            val factoryEntry = FactoryEntry(obj, method, providerMeta.priority)
+            val factoryEntry = FactoryEntry(obj, method, providerMeta.priority, providerMeta.lazy)
             var type: Class<*>? = primaryType
             while (type != null) {
                 addFactory(type, factoryEntry)
@@ -90,12 +91,23 @@ class Configurator(
                 continue
             }
             for (factory in factories) {
-                val bean = factory.method.invoke(factory.holder)
-                if (classToBean.containsKey(bean.javaClass)) {
-                    throw IllegalStateException("Conflicting providers for type ${bean.javaClass}")
+                if (factory.lazy) {
+                    // TODO: Add check for conflicts
+                    val bean = Proxy.newProxyInstance(
+                            factory.holder.javaClass.classLoader,
+                            arrayOf(factory.holder.javaClass),
+                            LazyConfigurableValue<Any>(this, factory.holder, factory.method)
+                    )
+                    classToBean[bean.javaClass] = bean
+                    allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
+                } else {
+                    val bean = factory.method.invoke(factory.holder)
+                    if (classToBean.containsKey(bean.javaClass)) {
+                        throw IllegalStateException("Conflicting providers for type ${bean.javaClass}")
+                    }
+                    classToBean[bean.javaClass] = bean
+                    allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
                 }
-                classToBean[bean.javaClass] = bean
-                allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
             }
         }
         for (bean in allBeans) {

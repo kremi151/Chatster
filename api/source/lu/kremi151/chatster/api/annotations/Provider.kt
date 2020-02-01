@@ -22,5 +22,6 @@ import kotlin.annotation.Retention
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
 annotation class Provider (
-        val priority: Priority = Priority.NORMAL
+        val priority: Priority = Priority.NORMAL,
+        val lazy: Boolean = false
 )

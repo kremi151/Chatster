@@ -22,5 +22,6 @@ import java.lang.reflect.Method
 data class FactoryEntry (
         val holder: Any,
         val method: Method,
-        val priority: Priority
+        val priority: Priority,
+        val lazy: Boolean
 )
