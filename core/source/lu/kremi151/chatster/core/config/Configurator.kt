@@ -99,6 +99,9 @@ class Configurator(
                 beans[requestingType] = bean
             }
         }
+        for (bean in beans) {
+            autoConfigure(bean.value)
+        }
     }
 
     fun autoConfigurePlugins() {

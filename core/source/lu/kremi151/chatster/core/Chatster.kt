@@ -30,6 +30,7 @@ import lu.kremi151.chatster.api.command.CommandRegistry
 import lu.kremi151.chatster.api.command.LiteralCommandBuilder
 import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.message.Message
+import lu.kremi151.chatster.api.profile.ProfileFactory
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
 import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
@@ -67,6 +68,9 @@ open class Chatster {
 
     @Inject
     private lateinit var objectMapper: ObjectMapper
+
+    @Inject(collectionType = ProfileFactory::class)
+    private lateinit var profileFactories: List<ProfileFactory<*>>
 
     private var stopping: Boolean = false
     private val runningProfiles = RunningProfilesState()
@@ -225,10 +229,10 @@ open class Chatster {
             val jsonNode = FileInputStream(profileFile).use { inputStream -> objectMapper.readTree(inputStream) }
             val classNameNode = jsonNode.get("className")
             val className = if (classNameNode == null || classNameNode.isNull) null else classNameNode.asText(null)
-            var clazz: Class<out ProfileLauncher>
+            var profile: ProfileLauncher
             if (className == null || className.isBlank()) {
                 LOGGER.warn("ProfileLauncher at {} does not specify a className, using default one", profileFile)
-                clazz = CLIProfileLauncher::class.java
+                profile = CLIProfileLauncher()
             } else {
                 try {
                     val loadedClass = Class.forName(className, true, classLoader)
@@ -236,14 +240,23 @@ open class Chatster {
                         LOGGER.warn("Profile defined in {} does not use an implementation of {}, skipping", profileFile, ProfileLauncher::class.java.name)
                         continue
                     }
-                    @Suppress("UNCHECKED_CAST")
-                    clazz = loadedClass as Class<out ProfileLauncher>
+                    var profileFactory: ProfileFactory<*>? = null
+                    for (candidate in profileFactories) {
+                        if (candidate.profileClass == loadedClass) {
+                            profileFactory = candidate
+                            break
+                        }
+                    }
+                    if (profileFactory == null) {
+                        LOGGER.warn("No factory found for profile launcher class {}", loadedClass)
+                        continue
+                    }
+                    profile = profileFactory.parse(jsonNode)
                 } catch (e: Exception) {
                     LOGGER.warn("Could not load profile from {}", profileFile, e)
                     continue
                 }
             }
-            val profile = objectMapper.treeToValue(jsonNode, clazz)
             configurator.autoConfigure(profile)
             outProfiles.add(profile)
         }
