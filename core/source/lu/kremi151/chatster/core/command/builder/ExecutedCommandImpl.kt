@@ -30,9 +30,10 @@ class ExecutedCommandImpl(
 
 ) : ExecutedCommand {
 
-    override val context: CommandContext
-        get() = command.source
+    @Suppress("DEPRECATION") // It is totally fine to use the deprecated command inside of this class
+    override val context: CommandContext get() = command.source
 
+    @Suppress("DEPRECATION") // It is totally fine to use the deprecated command inside of this class
     override fun <T> getArgument(name: String, clazz: Class<T>): T {
         return command.getArgument(name, clazz)
     }

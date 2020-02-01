@@ -36,6 +36,7 @@ class CommandProviderHelp: CommandProvider {
         registry.registerCommand(builder.literal("help")
                 .executes(object : CommandExecutor {
                     override fun execute(command: ExecutedCommand): Boolean {
+                        @Suppress("DEPRECATION") // It is totally fine to use the deprecated command inside of this class
                         val rootNode = (command as ExecutedCommandImpl).command.rootNode
                         showUsage(command.context, rootNode)
                         return true
@@ -46,6 +47,7 @@ class CommandProviderHelp: CommandProvider {
                 .argWord(ARG_COMMAND)
                 .executes(object : CommandExecutor {
                     override fun execute(command: ExecutedCommand): Boolean {
+                        @Suppress("DEPRECATION") // It is totally fine to use the deprecated command inside of this class
                         var node = (command as ExecutedCommandImpl).command.rootNode
                         node = node!!.getChild(command.getStringArgument(ARG_COMMAND))
                         if (node == null) {
