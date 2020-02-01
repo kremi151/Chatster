@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.core.profile
+package lu.kremi151.chatster.server.profile
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import lu.kremi151.chatster.api.message.Message
@@ -35,6 +35,10 @@ class CLIProfileLauncher: ProfileLauncher {
 
     override var id: String = ""
 
+    private fun println(text: String) {
+        System.out.println("CLI > $text")
+    }
+
     override fun setup(folder: File) {
         LOGGER.info("Using $javaClass for profile $id. This should only be used for testing purposes.")
     }
@@ -49,11 +53,11 @@ class CLIProfileLauncher: ProfileLauncher {
     }
 
     override fun sendTextMessage(inboundMessage: Message, response: String) {
-        System.out.println(response)
+        println(response)
     }
 
     override fun sendTextMessage(inboundMessage: Message, file: File) {
-        System.out.println("[File] ${file.absolutePath} (${file.length()} bytes)")
+        println("[File] ${file.absolutePath} (${file.length()} bytes)")
     }
 
     override fun sendTextMessage(inboundMessage: Message, response: String, file: File) {
@@ -63,14 +67,14 @@ class CLIProfileLauncher: ProfileLauncher {
 
     override fun sendWritingStatus(inboundMessage: Message, startedWriting: Boolean) {
         if (startedWriting) {
-            System.out.println("Bot is writing")
+            println("Bot is writing")
         } else {
-            System.out.println("Bot stopped writing")
+            println("Bot stopped writing")
         }
     }
 
     override fun acknowledgeMessage(inboundMessage: Message) {
-        System.out.println("Bot has read the message")
+        println("Bot has read the message")
     }
 
     data class CLIMessage(override val message: String): Message

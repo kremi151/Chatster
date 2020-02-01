@@ -38,7 +38,6 @@ import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.core.context.CommandContextImpl
 import lu.kremi151.chatster.core.context.ProfileContext
 import lu.kremi151.chatster.core.plugin.CorePlugin
-import lu.kremi151.chatster.core.profile.CLIProfileLauncher
 import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
@@ -231,31 +230,30 @@ open class Chatster {
             val className = if (classNameNode == null || classNameNode.isNull) null else classNameNode.asText(null)
             var profile: ProfileLauncher
             if (className == null || className.isBlank()) {
-                LOGGER.warn("ProfileLauncher at {} does not specify a className, using default one", profileFile)
-                profile = CLIProfileLauncher()
-            } else {
-                try {
-                    val loadedClass = Class.forName(className, true, classLoader)
-                    if (!ProfileLauncher::class.java.isAssignableFrom(loadedClass)) {
-                        LOGGER.warn("Profile defined in {} does not use an implementation of {}, skipping", profileFile, ProfileLauncher::class.java.name)
-                        continue
-                    }
-                    var profileFactory: ProfileFactory<*>? = null
-                    for (candidate in profileFactories) {
-                        if (candidate.profileClass == loadedClass) {
-                            profileFactory = candidate
-                            break
-                        }
-                    }
-                    if (profileFactory == null) {
-                        LOGGER.warn("No factory found for profile launcher class {}", loadedClass)
-                        continue
-                    }
-                    profile = profileFactory.parse(jsonNode)
-                } catch (e: Exception) {
-                    LOGGER.warn("Could not load profile from {}", profileFile, e)
+                LOGGER.warn("ProfileLauncher at {} does not specify a className, skipping", profileFile)
+                continue
+            }
+            try {
+                val loadedClass = Class.forName(className, true, classLoader)
+                if (!ProfileLauncher::class.java.isAssignableFrom(loadedClass)) {
+                    LOGGER.warn("Profile defined in {} does not use an implementation of {}, skipping", profileFile, ProfileLauncher::class.java.name)
                     continue
                 }
+                var profileFactory: ProfileFactory<*>? = null
+                for (candidate in profileFactories) {
+                    if (candidate.profileClass == loadedClass) {
+                        profileFactory = candidate
+                        break
+                    }
+                }
+                if (profileFactory == null) {
+                    LOGGER.warn("No factory found for profile launcher class {}", loadedClass)
+                    continue
+                }
+                profile = profileFactory.parse(jsonNode)
+            } catch (e: Exception) {
+                LOGGER.warn("Could not load profile from {}", profileFile, e)
+                continue
             }
             configurator.autoConfigure(profile)
             outProfiles.add(profile)

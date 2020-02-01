@@ -16,13 +16,18 @@
 
 package lu.kremi151.chatster.server
 
-fun main(args: Array<String>) {
-    var useCli = false
-    for (arg in args) {
-        if (arg == "-cli") {
-            useCli = true
+import lu.kremi151.chatster.api.profile.ProfileLauncher
+import lu.kremi151.chatster.core.Chatster
+import lu.kremi151.chatster.core.config.Configurator
+import lu.kremi151.chatster.server.profile.CLIProfileLauncher
+
+class ChatsterServer(private val useCli: Boolean): Chatster() {
+
+    override fun loadProfiles(classLoader: ClassLoader, configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
+        super.loadProfiles(classLoader, configurator, outProfiles)
+        if (useCli) {
+            outProfiles.add(CLIProfileLauncher())
         }
     }
-    val server = ChatsterServer(useCli)
-    server.launch()
+
 }
