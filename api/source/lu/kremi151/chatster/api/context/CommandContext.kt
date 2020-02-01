@@ -26,4 +26,6 @@ interface CommandContext {
 
     fun sendWriting(started: Boolean)
 
+    fun hasPermission(permission: String): Boolean
+
 }

@@ -52,6 +52,10 @@ class CLIProfileLauncher: ProfileLauncher {
         }
     }
 
+    override fun hasPermission(permission: String): Boolean {
+        return true
+    }
+
     override fun sendTextMessage(inboundMessage: Message, response: String) {
         println(response)
     }

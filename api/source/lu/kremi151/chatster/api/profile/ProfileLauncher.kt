@@ -27,6 +27,8 @@ interface ProfileLauncher {
     fun setup(folder: File)
     fun listenForMessages(handleMessage: Handler<Message>)
 
+    fun hasPermission(permission: String): Boolean
+
     fun sendTextMessage(inboundMessage: Message, response: String)
     fun sendTextMessage(inboundMessage: Message, file: File)
     fun sendTextMessage(inboundMessage: Message, response: String, file: File)

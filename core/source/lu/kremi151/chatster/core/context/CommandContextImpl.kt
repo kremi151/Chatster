@@ -42,4 +42,8 @@ class CommandContextImpl(
         profile.sendWritingStatus(inboundMessage, started)
     }
 
+    override fun hasPermission(permission: String): Boolean {
+        return profile.hasPermission(permission)
+    }
+
 }
