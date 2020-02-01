@@ -71,6 +71,7 @@ open class Chatster {
     private var stopping: Boolean = false
     private val runningProfiles = RunningProfilesState()
     private val workerExecutor = Executors.newFixedThreadPool(4)
+    private val profileLauncherExecutor = Executors.newSingleThreadExecutor()
 
     fun launch() {
         LOGGER.info("Initializing Chatster")
@@ -265,14 +266,29 @@ open class Chatster {
     }
 
     protected open fun onProfileTerminated(profile: ProfileLauncher, exception: Throwable?, numStillRunning: Int) {
-        // TODO: Implement
+        if (this.stopping || exception == null) {
+            // Profile terminated in a normal way or we're currently stopping, so there is no need to restart it
+            return
+        }
+        profileLauncherExecutor.submit {
+            if (runningProfiles.isProfileRunning(profile.id)) {
+                // Already running
+                return@submit
+            }
+            LOGGER.info("Relaunching profile {}...", profile.id)
+            try {
+                launchProfile(profile)
+            } catch (e: Exception) {
+                LOGGER.warn("Could not relaunch profile {}", profile.id, e)
+            }
+        }
     }
 
     private val profileContext = object : ProfileContext<Message> {
 
         override fun onShutdown(thread: ProfileThread<out Message>, profile: ProfileLauncher, exception: Throwable?) {
             if (exception == null) {
-                LOGGER.warn("ProfileLauncher thread {} has shutdown in an usual manner", profile.id)
+                LOGGER.warn("ProfileLauncher thread {} has shutdown in a normal way", profile.id)
             } else {
                 LOGGER.warn("ProfileLauncher thread {} has crashed", profile.id, exception)
             }
