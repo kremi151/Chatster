@@ -23,6 +23,8 @@ import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
+import java.util.*
+import kotlin.collections.ArrayList
 
 class Configurator(
         private val pluginRegistry: PluginRegistry
@@ -108,29 +110,25 @@ class Configurator(
     override fun autoConfigure(obj: Any) {
         val fields = obj.javaClass.declaredFields
         for (field in fields) {
-            if (!field.isAnnotationPresent(Inject::class.java)) {
-                continue
-            }
-            autoConfigureField(obj, field)
+            val annotation = field.getAnnotation(Inject::class.java) ?: continue
+            autoConfigureField(obj, field, annotation)
         }
 
         // TODO: Inject configurations
     }
 
-    private fun autoConfigureField(obj: Any, field: Field) {
-        field.isAccessible = true
-
+    private fun <T> getConfigurableValue(type: Class<T>): T? {
         // Check if we have a direct match
-        var match = beans[field.type]
+        var match = beans[type]
         if (match != null) {
-            field.set(obj, match)
-            return
+            @Suppress("UNCHECKED_CAST")
+            return match as T?
         }
 
         // Scan through the existing beans and find the one with the highest priority
         var maxPriority: Priority? = null
         for (bean in beans) {
-            if (!field.type.isAssignableFrom(bean.key)) {
+            if (!type.isAssignableFrom(bean.key)) {
                 continue
             }
             val factoryEntry = factories[bean.key] ?: continue
@@ -144,10 +142,35 @@ class Configurator(
             }
         }
         if (match != null) {
-            field.set(obj, match)
             // Cache result for quicker lookup
-            beans[field.type] = match
+            beans[type] = match
+
+            @Suppress("UNCHECKED_CAST")
+            return match as T?
+        }
+        return null
+    }
+
+    private fun autoConfigureField(obj: Any, field: Field, annotation: Inject) {
+        field.isAccessible = true
+
+        if (List::class.java.isAssignableFrom(field.type)) {
+            if (annotation.collectionType == Any::class) {
+                throw IllegalStateException("@Inject annotation for a List in field $field does not specify a collection type")
+            }
+            val outSet = HashSet<Any>()
+            for (bean in beans) {
+                if (annotation.collectionType.java.isAssignableFrom(bean.key)) {
+                    outSet.add(bean.value)
+                }
+            }
+            field.set(obj, Collections.unmodifiableList(ArrayList(outSet)))
             return
+        }
+
+        val match = getConfigurableValue(field.type)
+        if (match != null) {
+            field.set(obj, match)
         }
 
         throw IllegalStateException("Could not inject value at $field")

@@ -17,7 +17,10 @@
 package lu.kremi151.chatster.api.annotations
 
 import kotlin.annotation.Retention
+import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
-annotation class Inject
+annotation class Inject (
+        val collectionType: KClass<*> = Any::class
+)
