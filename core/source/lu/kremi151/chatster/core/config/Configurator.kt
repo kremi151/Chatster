@@ -23,25 +23,31 @@ import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
-import java.util.*
+import java.util.stream.Collectors
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class Configurator(
         private val pluginRegistry: PluginRegistry
 ): AutoConfigurator {
 
     private val factories: MutableMap<Class<*>, MutableList<FactoryEntry>> = HashMap()
-    private val beans: MutableMap<Class<*>, Any> = HashMap()
+    private val allBeans: MutableList<BeanEntry<*>> = ArrayList()
+    private val primaryBeans: MutableMap<Class<*>, Any> = HashMap()
 
     init {
-        beans[AutoConfigurator::class.java] = arrayListOf(BeanEntry(this, Priority.HIGHEST))
+        val beanEntry = BeanEntry(this, Configurator::class.java, Priority.HIGHEST)
+        allBeans.add(beanEntry)
+        primaryBeans[AutoConfigurator::class.java] = arrayListOf(beanEntry)
     }
 
     fun collectPluginProviders() {
         // Scan plugins for providers and register plugins themselves as beans
         for (plugin in pluginRegistry.plugins) {
             collectProviders(plugin)
-            beans[plugin.javaClass] = arrayListOf(BeanEntry(this, Priority.HIGHEST))
+            val beanEntry = BeanEntry(plugin, plugin.javaClass, Priority.HIGHEST)
+            allBeans.add(beanEntry)
+            primaryBeans[plugin.javaClass] = arrayListOf(beanEntry)
         }
     }
 
@@ -77,30 +83,23 @@ class Configurator(
     }
 
     fun initializeBeans() {
-        val factoryForTypes = HashMap<FactoryEntry, MutableList<Class<*>>>()
+        val classToBean = HashMap<Class<*>, Any>()
         for (entry in factories) {
-            val requestingType = entry.key
             val factories = entry.value
             if (factories.isEmpty()) {
                 continue
             }
-            var requestingTypes = factoryForTypes[factories.last()]
-            if (requestingTypes == null) {
-                requestingTypes = ArrayList()
-                factoryForTypes[factories.last()] = requestingTypes
-            }
-            requestingTypes.add(requestingType)
-        }
-        for (entry in factoryForTypes) {
-            val factoryEntry = entry.key
-            val requestingTypes = entry.value
-            val bean = factoryEntry.method.invoke(factoryEntry.holder)
-            for (requestingType in requestingTypes) {
-                beans[requestingType] = bean
+            for (factory in factories) {
+                val bean = factory.method.invoke(factory.holder)
+                if (classToBean.containsKey(bean.javaClass)) {
+                    throw IllegalStateException("Conflicting providers for type ${bean.javaClass}")
+                }
+                classToBean[bean.javaClass] = bean
+                allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
             }
         }
-        for (bean in beans) {
-            autoConfigure(bean.value)
+        for (bean in allBeans) {
+            autoConfigure(bean.bean!!)
         }
     }
 
@@ -122,7 +121,7 @@ class Configurator(
 
     private fun <T> getConfigurableValue(type: Class<T>): T? {
         // Check if we have a direct match
-        var match = beans[type]
+        var match = primaryBeans[type]
         if (match != null) {
             @Suppress("UNCHECKED_CAST")
             return match as T?
@@ -130,28 +129,31 @@ class Configurator(
 
         // Scan through the existing beans and find the one with the highest priority
         var maxPriority: Priority? = null
-        for (bean in beans) {
-            if (!type.isAssignableFrom(bean.key)) {
+        for (bean in allBeans) {
+            if (!type.isAssignableFrom(bean.beanType)) {
                 continue
             }
-            val factoryEntry = factories[bean.key] ?: continue
-            if (factoryEntry.isEmpty()) {
-                continue
-            }
-            val highestPriorityEntry = factoryEntry.last()
-            if (maxPriority == null || maxPriority.ordinal < highestPriorityEntry.priority.ordinal) {
-                maxPriority = highestPriorityEntry.priority
-                match = bean.value
+            if (maxPriority == null || maxPriority.ordinal < bean.priority.ordinal) {
+                maxPriority = bean.priority
+                match = bean.bean
             }
         }
         if (match != null) {
             // Cache result for quicker lookup
-            beans[type] = match
+            primaryBeans[type] = match
 
             @Suppress("UNCHECKED_CAST")
             return match as T?
         }
         return null
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> getPriorizedConfigurableList(collectionType: Class<T>): List<T> {
+        return (allBeans.stream()
+                .filter { entry -> collectionType.isAssignableFrom(entry.beanType) }
+                .sorted(compareBy { it.priority.ordinal })
+                .collect(Collectors.toUnmodifiableList()) as List<T>?)!!
     }
 
     private fun autoConfigureField(obj: Any, field: Field, annotation: Inject) {
@@ -161,13 +163,8 @@ class Configurator(
             if (annotation.collectionType == Any::class) {
                 throw IllegalStateException("@Inject annotation for a List in field $field does not specify a collection type")
             }
-            val outSet = HashSet<Any>()
-            for (bean in beans) {
-                if (annotation.collectionType.java.isAssignableFrom(bean.key)) {
-                    outSet.add(bean.value)
-                }
-            }
-            field.set(obj, Collections.unmodifiableList(ArrayList(outSet)))
+            val list = getPriorizedConfigurableList(annotation.collectionType.java)
+            field.set(obj, list)
             return
         }
 
@@ -179,6 +176,10 @@ class Configurator(
         throw IllegalStateException("Could not inject value at $field")
     }
 
-    private data class BeanEntry(val bean: Any, val priority: Priority)
+    private data class BeanEntry<T>(
+            val bean: T,
+            val beanType: Class<T>,
+            val priority: Priority
+    )
 
 }
