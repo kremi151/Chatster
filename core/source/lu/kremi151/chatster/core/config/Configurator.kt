@@ -21,6 +21,7 @@ import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.service.AutoConfigurator
 import lu.kremi151.chatster.core.registry.PluginRegistry
+import okhttp3.internal.toImmutableList
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
 import java.lang.reflect.Proxy
@@ -162,11 +163,12 @@ class Configurator(
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> getPriorizedConfigurableList(collectionType: Class<T>): List<T> {
-        return (allBeans.stream()
+        val list = allBeans.stream()
                 .filter { entry -> collectionType.isAssignableFrom(entry.beanType) }
                 .sorted(compareByDescending { it.priority.ordinal })
                 .map { entry -> entry.bean }
-                .collect(Collectors.toUnmodifiableList()) as List<T>?)!!
+                .collect(Collectors.toList()) as List<T>
+        return list.toImmutableList()
     }
 
     private fun autoConfigureField(obj: Any, field: Field, annotation: Inject) {
