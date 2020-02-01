@@ -35,5 +35,17 @@ subprojects {
                 srcDir 'resources'
             }
         }
+        test {
+            java {
+                srcDir 'source-test'
+            }
+            resources {
+                srcDir 'resources-test'
+            }
+        }
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }

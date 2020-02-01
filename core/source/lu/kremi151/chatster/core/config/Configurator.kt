@@ -183,6 +183,7 @@ class Configurator(
         val match = getConfigurableValue(field.type)
         if (match != null) {
             field.set(obj, match)
+            return
         }
 
         throw IllegalStateException("Could not inject value at $field")

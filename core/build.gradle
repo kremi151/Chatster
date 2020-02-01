@@ -19,4 +19,6 @@ dependencies {
     api project(':api')
 
     compileOnly group: 'org.slf4j', name: 'slf4j-api', version: libSlf4jVersion
+
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: libJunitVersion
 }

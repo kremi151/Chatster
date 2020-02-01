@@ -1,0 +1,126 @@
+/**
+ * Copyright 2020 Michel Kremer (kremi151)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package lu.kremi151.chatster.core.config
+
+import lu.kremi151.chatster.api.annotations.Inject
+import lu.kremi151.chatster.api.annotations.Provider
+import lu.kremi151.chatster.api.enums.Priority
+import lu.kremi151.chatster.core.registry.PluginRegistry
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+
+@Suppress("UNUSED")
+class ConfiguratorTest {
+
+    private lateinit var configuration: Any
+    private lateinit var aImpl1: AInterface
+    private lateinit var aImpl2: AInterface
+    private lateinit var bImpl1: BInterface
+    private lateinit var bImpl2: BInterface
+    private lateinit var cImpl1: CInterface
+
+    @BeforeEach
+    fun beforeEachTest() {
+        aImpl1 = object : AInterface {
+            override fun toString(): String {
+                return "AInterface@aImpl1"
+            }
+            override fun getValue(): String {
+                return "ABC"
+            }
+        }
+        aImpl2 = object : AInterface {
+            override fun toString(): String {
+                return "AInterface@aImpl2"
+            }
+            override fun getValue(): String {
+                return "DEF"
+            }
+        }
+        bImpl1 = object : BInterface {
+            override fun toString(): String {
+                return "BInterface@bImpl1"
+            }
+            override fun getSomething(): String {
+                return "abc"
+            }
+        }
+        bImpl2 = object : BInterface {
+            override fun toString(): String {
+                return "BInterface@bImpl2"
+            }
+            override fun getSomething(): String {
+                return "def"
+            }
+        }
+        cImpl1 = object : CInterface {
+            override fun toString(): String {
+                return "Jeremy@Bearimy"
+            }
+            override fun takeItSleazy(): Boolean {
+                return true
+            }
+        }
+        configuration = object {
+            @Provider(priority = Priority.LOWEST) fun createImplA1(): AInterface {
+                return aImpl1
+            }
+            @Provider(priority = Priority.HIGHEST) fun createImplB1(): BInterface {
+                return bImpl1
+            }
+            @Provider fun createImpA2(): AInterface {
+                return aImpl2
+            }
+            @Provider(priority = Priority.LOW) fun createImplB2(): BInterface {
+                return bImpl2
+            }
+            @Provider fun createTGP(): CInterface {
+                return cImpl1
+            }
+        }
+    }
+
+    @Test
+    fun testBasicInjection() {
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        configurator.initializeBeans()
+        val configurableObject1 = object {
+            @Inject lateinit var implA: AInterface
+            @Inject lateinit var implB: BInterface
+            @Inject lateinit var implC: CInterface
+        }
+        configurator.autoConfigure(configurableObject1)
+        assertEquals(aImpl2, configurableObject1.implA)
+        assertEquals(bImpl1, configurableObject1.implB)
+        assertEquals(cImpl1, configurableObject1.implC)
+    }
+
+    interface AInterface {
+        fun getValue(): String
+    }
+
+    interface BInterface {
+        fun getSomething(): String
+    }
+
+    interface CInterface {
+        fun takeItSleazy(): Boolean
+    }
+
+}
