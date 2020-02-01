@@ -95,7 +95,7 @@ class Configurator(
                     // TODO: Add check for conflicts
                     val bean = Proxy.newProxyInstance(
                             factory.holder.javaClass.classLoader,
-                            arrayOf(factory.holder.javaClass),
+                            arrayOf(factory.method.returnType),
                             LazyConfigurableValue<Any>(this, factory.holder, factory.method)
                     )
                     classToBean[bean.javaClass] = bean

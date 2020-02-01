@@ -135,6 +135,42 @@ class ConfiguratorTest {
         assertIterableEquals(listOf(bImpl1, aImpl2, bImpl2, aImpl1), configurableObject.listS)
     }
 
+    @Test
+    fun testLazyProvider() {
+        var eagerBeanCreated = false
+        var lazyBeanCreated = false
+        val configuration = object {
+            @Provider fun createEagerImpl(): AInterface {
+                eagerBeanCreated = true
+                return aImpl1
+            }
+            @Provider(lazy = true) fun createLazyImpl(): BInterface {
+                lazyBeanCreated = true
+                return bImpl1
+            }
+        }
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        assertFalse(eagerBeanCreated)
+        assertFalse(lazyBeanCreated)
+        configurator.initializeBeans()
+        assertTrue(eagerBeanCreated)
+        assertFalse(lazyBeanCreated)
+        val configurableObject = object {
+            @Inject lateinit var implA: AInterface
+            @Inject lateinit var implB: BInterface
+        }
+        configurator.autoConfigure(configurableObject)
+        assertTrue(eagerBeanCreated)
+        assertFalse(lazyBeanCreated)
+        assertSame(aImpl1, configurableObject.implA)
+        assertNotSame(bImpl1, configurableObject.implB)
+        assertEquals(aImpl1.getValue(), configurableObject.implA.getValue())
+        assertEquals(bImpl1.getSomething(), configurableObject.implB.getSomething())
+        assertTrue(eagerBeanCreated)
+        assertTrue(lazyBeanCreated)
+    }
+
     interface SuperInterface
 
     interface AInterface: SuperInterface {
