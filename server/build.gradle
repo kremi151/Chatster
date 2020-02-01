@@ -5,7 +5,7 @@ repositories {
     maven { url "https://libraries.minecraft.net" }
 }
 
-mainClassName = 'lu.kremi151.chatster.server.ChatsterServer'
+mainClassName = 'lu.kremi151.chatster.server.ChatsterServerLauncher'
 
 jar {
     archiveClassifier = "server"
