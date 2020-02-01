@@ -164,7 +164,8 @@ class Configurator(
     private fun <T> getPriorizedConfigurableList(collectionType: Class<T>): List<T> {
         return (allBeans.stream()
                 .filter { entry -> collectionType.isAssignableFrom(entry.beanType) }
-                .sorted(compareBy { it.priority.ordinal })
+                .sorted(compareByDescending { it.priority.ordinal })
+                .map { entry -> entry.bean }
                 .collect(Collectors.toUnmodifiableList()) as List<T>?)!!
     }
 

@@ -100,22 +100,48 @@ class ConfiguratorTest {
         val configurator = Configurator(PluginRegistry())
         configurator.collectProviders(configuration)
         configurator.initializeBeans()
-        val configurableObject1 = object {
+        val configurableObject = object {
             @Inject lateinit var implA: AInterface
             @Inject lateinit var implB: BInterface
             @Inject lateinit var implC: CInterface
+            @Inject lateinit var supz: SuperInterface
         }
-        configurator.autoConfigure(configurableObject1)
-        assertEquals(aImpl2, configurableObject1.implA)
-        assertEquals(bImpl1, configurableObject1.implB)
-        assertEquals(cImpl1, configurableObject1.implC)
+        configurator.autoConfigure(configurableObject)
+        assertSame(aImpl2, configurableObject.implA)
+        assertSame(bImpl1, configurableObject.implB)
+        assertSame(cImpl1, configurableObject.implC)
+        assertSame(bImpl1, configurableObject.supz)
     }
 
-    interface AInterface {
+    @Test
+    fun testListInjection() {
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        configurator.initializeBeans()
+        val configurableObject = object {
+            @Inject(collectionType = lu.kremi151.chatster.core.config.ConfiguratorTest.AInterface::class)
+            lateinit var listA: List<AInterface>
+            @Inject(collectionType = lu.kremi151.chatster.core.config.ConfiguratorTest.BInterface::class)
+            lateinit var listB: List<BInterface>
+            @Inject(collectionType = lu.kremi151.chatster.core.config.ConfiguratorTest.CInterface::class)
+            lateinit var listC: List<CInterface>
+            @Inject(collectionType = lu.kremi151.chatster.core.config.ConfiguratorTest.SuperInterface::class)
+            lateinit var listS: List<SuperInterface>
+        }
+        configurator.autoConfigure(configurableObject)
+        assertIterableEquals(listOf(aImpl2, aImpl1), configurableObject.listA)
+        assertIterableEquals(listOf(bImpl1, bImpl2), configurableObject.listB)
+        assertIterableEquals(listOf(cImpl1), configurableObject.listC)
+        assertIterableEquals(listOf(bImpl1, aImpl2, bImpl2, aImpl1), configurableObject.listS)
+    }
+
+    interface SuperInterface
+
+    interface AInterface: SuperInterface {
         fun getValue(): String
     }
 
-    interface BInterface {
+    interface BInterface: SuperInterface {
         fun getSomething(): String
     }
 
