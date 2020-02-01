@@ -171,6 +171,45 @@ class ConfiguratorTest {
         assertTrue(lazyBeanCreated)
     }
 
+    @Test
+    fun testNestedDependencyInjection() {
+        val aImpl = object : AInterface {
+            @Inject lateinit var b: BInterface
+            override fun getValue(): String {
+                return "_aBc_"
+            }
+        }
+        val bImpl = object : BInterface {
+            @Inject lateinit var c: CInterface
+            override fun getSomething(): String {
+                return "_dEf_"
+            }
+        }
+        val cImpl = object : CInterface {
+            @Inject lateinit var a: AInterface
+            override fun takeItSleazy(): Boolean {
+                return true
+            }
+        }
+        val configuration = object {
+            @Provider fun createAInterfaceImpl(): AInterface {
+               return aImpl
+            }
+            @Provider fun createBInterfaceImpl(): BInterface {
+                return bImpl
+            }
+            @Provider fun createCInterfaceImpl(): CInterface {
+                return cImpl
+            }
+        }
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        configurator.initializeBeans()
+        assertSame(bImpl, aImpl.b)
+        assertSame(cImpl, bImpl.c)
+        assertSame(aImpl, cImpl.a)
+    }
+
     interface SuperInterface
 
     interface AInterface: SuperInterface {
