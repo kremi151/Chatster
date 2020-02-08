@@ -21,10 +21,10 @@ import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.context.ProfileContext
 import java.io.File
 
-class ProfileThread<MessageType: Message> (
+class ProfileThread (
         val profile: ProfileLauncher,
         private val profileFolder: File,
-        private val context: ProfileContext<MessageType>
+        private val context: ProfileContext
 ): Thread() {
 
     override fun run() {

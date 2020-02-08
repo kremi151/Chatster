@@ -20,9 +20,9 @@ import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.threading.ProfileThread
 
-interface ProfileContext<MessageType: Message> {
+interface ProfileContext {
 
-    fun onShutdown(thread: ProfileThread<out MessageType>, profile: ProfileLauncher, exception: Throwable?)
+    fun onShutdown(thread: ProfileThread, profile: ProfileLauncher, exception: Throwable?)
 
     fun enqueueWorkerTask(runnable: Runnable)
 

@@ -295,9 +295,9 @@ open class Chatster {
         }
     }
 
-    private val profileContext = object : ProfileContext<Message> {
+    private val profileContext = object : ProfileContext {
 
-        override fun onShutdown(thread: ProfileThread<out Message>, profile: ProfileLauncher, exception: Throwable?) {
+        override fun onShutdown(thread: ProfileThread, profile: ProfileLauncher, exception: Throwable?) {
             if (exception == null) {
                 LOGGER.warn("ProfileLauncher thread {} has shutdown in a normal way", profile.id)
             } else {

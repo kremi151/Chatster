@@ -21,10 +21,10 @@ import java.util.Optional
 
 class RunningProfilesState {
 
-    private val runningProfiles = HashSet<ProfileThread<*>>()
+    private val runningProfiles = HashSet<ProfileThread>()
     private val runningProfileIds = HashSet<String>()
 
-    val copyOfRunningProfiles: Set<ProfileThread<*>>
+    val copyOfRunningProfiles: Set<ProfileThread>
         @Synchronized get() = HashSet(runningProfiles)
 
     @Synchronized
@@ -39,12 +39,12 @@ class RunningProfilesState {
     }
 
     @Synchronized
-    fun findProfileThread(profileId: String): Optional<ProfileThread<*>> {
+    fun findProfileThread(profileId: String): Optional<ProfileThread> {
         return runningProfiles.stream().filter { thread -> thread.profile.id == profileId }.findFirst()
     }
 
     @Synchronized
-    fun add(profile: ProfileThread<*>): Boolean {
+    fun add(profile: ProfileThread): Boolean {
         if (runningProfileIds.contains(profile.profile.id)) {
             return false
         }
@@ -54,7 +54,7 @@ class RunningProfilesState {
     }
 
     @Synchronized
-    fun remove(profile: ProfileThread<*>) {
+    fun remove(profile: ProfileThread) {
         runningProfiles.remove(profile)
         runningProfileIds.remove(profile.profile.id)
     }
