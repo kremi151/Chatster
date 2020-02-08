@@ -7,6 +7,14 @@ repositories {
 jar {
     archiveClassifier = "api"
 }
+
+sourceSets {
+    main {
+        java {
+            srcDir 'source'
+        }
+    }
+}
  
 dependencies {
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
