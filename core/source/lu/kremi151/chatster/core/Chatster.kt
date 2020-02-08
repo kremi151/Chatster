@@ -32,6 +32,7 @@ import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.ProfileFactory
 import lu.kremi151.chatster.api.profile.ProfileLauncher
+import lu.kremi151.chatster.api.service.MessageHandler
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
 import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
 import lu.kremi151.chatster.core.config.Configurator
@@ -42,6 +43,7 @@ import lu.kremi151.chatster.core.registry.CommandRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistration
 import lu.kremi151.chatster.core.registry.PluginRegistry
 import lu.kremi151.chatster.core.services.CommandDispatcherHolder
+import lu.kremi151.chatster.core.services.CommandMessageHandler
 import lu.kremi151.chatster.core.services.PlaintextCredentialStore
 import lu.kremi151.chatster.core.threading.ProfileThread
 import lu.kremi151.chatster.core.threading.RunningProfilesState
@@ -70,6 +72,9 @@ open class Chatster {
 
     @Inject(collectionType = ProfileFactory::class)
     private lateinit var profileFactories: List<ProfileFactory<*>>
+
+    @Inject(collectionType = MessageHandler::class)
+    private lateinit var messageHandlers: List<MessageHandler>
 
     private var stopping: Boolean = false
     private val runningProfiles = RunningProfilesState()
@@ -266,7 +271,7 @@ open class Chatster {
         }
         try {
             val profileFolder = File(profilesFolder, profile.id)
-            val botProfile = ProfileThread(profile, profileFolder, profileContext)
+            val botProfile = ProfileThread(profile, profileFolder, profileContext, messageHandlers)
             synchronized(runningProfiles) {
                 runningProfiles.add(botProfile)
                 botProfile.start()
@@ -330,6 +335,11 @@ open class Chatster {
     @Provider
     fun createCommandDispatcherHolder(): CommandDispatcherHolder {
         return CommandDispatcherHolder(CommandDispatcher())
+    }
+
+    @Provider
+    fun createCommandMessageHandler(): MessageHandler {
+        return CommandMessageHandler(profileContext)
     }
 
     @Provider(priority = Priority.LOWEST)

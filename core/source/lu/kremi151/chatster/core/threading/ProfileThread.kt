@@ -18,13 +18,15 @@ package lu.kremi151.chatster.core.threading
 
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.ProfileLauncher
+import lu.kremi151.chatster.api.service.MessageHandler
 import lu.kremi151.chatster.core.context.ProfileContext
 import java.io.File
 
 class ProfileThread (
         val profile: ProfileLauncher,
         private val profileFolder: File,
-        private val context: ProfileContext
+        private val context: ProfileContext,
+        private val messageHandlers: List<MessageHandler>
 ): Thread() {
 
     override fun run() {
@@ -39,8 +41,13 @@ class ProfileThread (
 
     private fun handleInboundMessage(message: Message) {
         context.enqueueWorkerTask(Runnable {
-            profile.acknowledgeMessage(message)
-            context.handleMessage(message, profile)
+            var interceptedMessage: Message? = message
+            for (interceptor in messageHandlers) {
+                if (interceptedMessage == null) {
+                    return@Runnable
+                }
+                interceptedMessage = interceptor.onInboundMessage(interceptedMessage, profile)
+            }
         })
     }
 
