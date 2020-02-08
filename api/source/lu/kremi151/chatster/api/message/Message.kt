@@ -16,8 +16,24 @@
 
 package lu.kremi151.chatster.api.message
 
-interface Message {
+class Message(val message: String?) {
 
-    val message: String?
+    private var extensions: HashMap<Class<*>, Any>? = null
+
+    fun <T> getExtension(clazz: Class<T>): T? {
+        val extensions = this.extensions ?: return null
+        @Suppress("UNCHECKED_CAST")
+        return extensions[clazz] as T?
+    }
+
+    fun <T> addExtension(clazz: Class<T>, ext: T): Message {
+        var extensions = this.extensions
+        if (extensions == null) {
+            extensions = HashMap()
+            this.extensions = extensions
+        }
+        extensions[clazz] = ext as Any
+        return this
+    }
 
 }

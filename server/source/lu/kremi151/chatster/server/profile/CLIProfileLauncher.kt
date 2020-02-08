@@ -47,7 +47,7 @@ class CLIProfileLauncher: ProfileLauncher {
         Scanner(System.`in`).use { scanner ->
             while (true) {
                 val line = scanner.nextLine()
-                handleMessage(CLIMessage(line))
+                handleMessage(Message(line))
             }
         }
     }
@@ -80,7 +80,5 @@ class CLIProfileLauncher: ProfileLauncher {
     override fun acknowledgeMessage(inboundMessage: Message) {
         println("Bot has read the message")
     }
-
-    data class CLIMessage(override val message: String): Message
 
 }
