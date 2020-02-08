@@ -43,6 +43,12 @@ class PluginRegistry {
         }
     }
 
+    fun preInitializePlugins() {
+        for (plugin in idToPlugins.entries) {
+            plugin.value.plugin.onPreInitialize()
+        }
+    }
+
     fun initializePlugins() {
         for (plugin in idToPlugins.entries) {
             plugin.value.plugin.onLoad()
