@@ -269,12 +269,16 @@ class ConfiguratorTest {
                 return true
             }
         }
+        val fruit = Apple(420)
         val configuration = object {
             @Provider fun createAInterfaceImpl(): AInterface {
                 return aImpl
             }
             @Provider fun createCInterfaceImpl(): CInterface {
                 return cImpl
+            }
+            @Provider fun createApple(): Apple {
+                return fruit
             }
         }
         val configurator = Configurator(PluginRegistry())
@@ -284,6 +288,7 @@ class ConfiguratorTest {
         configurator.autoConfigure(configurableObject)
         assertSame(aImpl, configurableObject.aImpl)
         assertSame(cImpl, configurableObject.cImpl)
+        assertSame(fruit, configurableObject.getFruit())
     }
 
     interface SuperInterface
@@ -318,6 +323,11 @@ class ConfiguratorTest {
 
     open class SuperClassInjectable {
         @Inject lateinit var aImpl: AInterface
+        @Inject private lateinit var fruit: Fruit
+
+        fun getFruit(): Fruit {
+            return fruit
+        }
     }
 
     class ChildClassInjectable: SuperClassInjectable() {
