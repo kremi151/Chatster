@@ -24,6 +24,7 @@ import lu.kremi151.chatster.core.registry.PluginRegistry
 import okhttp3.internal.toImmutableList
 import java.lang.IllegalStateException
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.stream.Collectors
 import kotlin.collections.ArrayList
@@ -85,7 +86,7 @@ class Configurator(
     }
 
     fun initializeBeans() {
-        val classToBean = HashMap<Class<*>, Any>()//TODO: Store method reference to know which collisions to ignore
+        val classToBean = HashMap<Class<*>, InstantiatedBean<*>>()//TODO: Store method reference to know which collisions to ignore
         for (entry in factories) {
             val factories = entry.value
             if (factories.isEmpty()) {
@@ -99,14 +100,20 @@ class Configurator(
                             arrayOf(factory.method.returnType),
                             LazyConfigurableValue<Any>(this, factory.holder, factory.method)
                     )
-                    classToBean[bean.javaClass] = bean
+                    classToBean[bean.javaClass] = InstantiatedBean(bean, factory.method)
                     allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
                 } else {
                     val bean = factory.method.invoke(factory.holder)
-                    if (classToBean.containsKey(bean.javaClass)) {
-                        throw IllegalStateException("Conflicting providers for type ${bean.javaClass}")
+                    val existingInstance = classToBean[bean.javaClass]
+                    if (existingInstance != null) {
+                        if (existingInstance.method == factory.method) {
+                            // Same factory method, therefore no collision
+                            continue
+                        } else {
+                            throw IllegalStateException("Conflicting providers for type ${bean.javaClass}")
+                        }
                     }
-                    classToBean[bean.javaClass] = bean
+                    classToBean[bean.javaClass] = InstantiatedBean(bean, factory.method)
                     allBeans.add(BeanEntry(bean, bean.javaClass, factory.priority))
                 }
             }
@@ -196,6 +203,11 @@ class Configurator(
             val bean: T,
             val beanType: Class<T>,
             val priority: Priority
+    )
+
+    private data class InstantiatedBean<T>(
+            val bean: T,
+            val method: Method
     )
 
 }
