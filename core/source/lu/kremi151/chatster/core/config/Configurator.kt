@@ -64,7 +64,7 @@ class Configurator(
     }
 
     fun collectProviders(obj: Any) {
-        val methods = obj.javaClass.declaredMethods
+        val methods = obj.javaClass.methods
         for (method in methods) {
             val providerMeta = method.getAnnotation(Provider::class.java) ?: continue
             if (method.parameterCount != 0) {
