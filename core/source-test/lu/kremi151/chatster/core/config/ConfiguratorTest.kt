@@ -210,6 +210,53 @@ class ConfiguratorTest {
         assertSame(aImpl, cImpl.a)
     }
 
+    @Test
+    fun testInheritanceInjection() {
+        val appleJuiceImpl = AppleJuice(128)
+        val configuration = object {
+            @Provider fun createAppleJuice(): AppleJuice {
+               return appleJuiceImpl
+            }
+        }
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        configurator.initializeBeans()
+        val configurableObject = object {
+            @Inject lateinit var fruit: Fruit
+            @Inject lateinit var apple: Apple
+            @Inject lateinit var juice: AppleJuice
+        }
+        configurator.autoConfigure(configurableObject)
+        assertSame(appleJuiceImpl, configurableObject.fruit)
+        assertSame(appleJuiceImpl, configurableObject.apple)
+        assertSame(appleJuiceImpl, configurableObject.juice)
+    }
+
+    @Test
+    fun testProviderDetectionFromBaseClasses() {
+        val aImpl = object : AInterface {
+            override fun getValue(): String {
+                return "_aBc_"
+            }
+        }
+        val cImpl = object : CInterface {
+            override fun takeItSleazy(): Boolean {
+                return true
+            }
+        }
+        val childClassProvider = ChildClassProvider(aImpl, cImpl)
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(childClassProvider)
+        configurator.initializeBeans()
+        val configurableObject = object {
+            @Inject lateinit var aImpl: AInterface
+            @Inject lateinit var cImpl: CInterface
+        }
+        configurator.autoConfigure(configurableObject)
+        assertSame(aImpl, configurableObject.aImpl)
+        assertSame(cImpl, configurableObject.cImpl)
+    }
+
     interface SuperInterface
 
     interface AInterface: SuperInterface {
@@ -222,6 +269,22 @@ class ConfiguratorTest {
 
     interface CInterface {
         fun takeItSleazy(): Boolean
+    }
+
+    open class Fruit(val tastyness: Int)
+    open class Apple(tastyness: Int): Fruit(tastyness)
+    class AppleJuice(tastyness: Int): Apple(tastyness)
+
+    open class SuperClassProvider(private val aImpl: AInterface) {
+        @Provider fun createAInterface(): AInterface {
+            return aImpl
+        }
+    }
+
+    class ChildClassProvider(aImpl: AInterface, private val cImpl: CInterface): SuperClassProvider(aImpl) {
+        @Provider fun createCInterface(): CInterface {
+            return cImpl
+        }
     }
 
 }
