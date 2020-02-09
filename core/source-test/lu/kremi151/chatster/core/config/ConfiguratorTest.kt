@@ -257,6 +257,35 @@ class ConfiguratorTest {
         assertSame(cImpl, configurableObject.cImpl)
     }
 
+    @Test
+    fun testInjectionIntoBaseClasses() {
+        val aImpl = object : AInterface {
+            override fun getValue(): String {
+                return "_aBc_"
+            }
+        }
+        val cImpl = object : CInterface {
+            override fun takeItSleazy(): Boolean {
+                return true
+            }
+        }
+        val configuration = object {
+            @Provider fun createAInterfaceImpl(): AInterface {
+                return aImpl
+            }
+            @Provider fun createCInterfaceImpl(): CInterface {
+                return cImpl
+            }
+        }
+        val configurator = Configurator(PluginRegistry())
+        configurator.collectProviders(configuration)
+        configurator.initializeBeans()
+        val configurableObject = ChildClassInjectable()
+        configurator.autoConfigure(configurableObject)
+        assertSame(aImpl, configurableObject.aImpl)
+        assertSame(cImpl, configurableObject.cImpl)
+    }
+
     interface SuperInterface
 
     interface AInterface: SuperInterface {
@@ -285,6 +314,14 @@ class ConfiguratorTest {
         @Provider fun createCInterface(): CInterface {
             return cImpl
         }
+    }
+
+    open class SuperClassInjectable {
+        @Inject lateinit var aImpl: AInterface
+    }
+
+    class ChildClassInjectable: SuperClassInjectable() {
+        @Inject lateinit var cImpl: CInterface
     }
 
 }

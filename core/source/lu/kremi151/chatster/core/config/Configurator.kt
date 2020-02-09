@@ -130,7 +130,7 @@ class Configurator(
     }
 
     override fun autoConfigure(obj: Any) {
-        val fields = obj.javaClass.declaredFields
+        val fields = obj.javaClass.fields
         for (field in fields) {
             val annotation = field.getAnnotation(Inject::class.java) ?: continue
             autoConfigureField(obj, field, annotation)
