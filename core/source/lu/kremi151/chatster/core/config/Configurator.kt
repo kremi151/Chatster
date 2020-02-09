@@ -77,7 +77,7 @@ class Configurator(
 
             val factoryEntry = FactoryEntry(obj, method, providerMeta.priority, providerMeta.lazy)
             var type: Class<*>? = primaryType
-            while (type != null) {
+            while (type != null && type != Object::class.java) {
                 addFactory(type, factoryEntry)
                 type = type.superclass
             }
@@ -85,7 +85,7 @@ class Configurator(
     }
 
     fun initializeBeans() {
-        val classToBean = HashMap<Class<*>, Any>()
+        val classToBean = HashMap<Class<*>, Any>()//TODO: Store method reference to know which collisions to ignore
         for (entry in factories) {
             val factories = entry.value
             if (factories.isEmpty()) {
