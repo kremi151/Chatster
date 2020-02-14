@@ -18,24 +18,21 @@ package lu.kremi151.chatster.core
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mojang.brigadier.CommandDispatcher
-import lu.kremi151.chatster.api.annotations.Inject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.invoke.MethodHandles
 
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
 import lu.kremi151.chatster.api.annotations.Plugin
-import lu.kremi151.chatster.api.annotations.Provider
 import lu.kremi151.chatster.api.command.CommandRegistry
 import lu.kremi151.chatster.api.command.LiteralCommandBuilder
-import lu.kremi151.chatster.api.enums.Priority
 import lu.kremi151.chatster.api.message.Message
 import lu.kremi151.chatster.api.profile.ProfileFactory
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.api.service.MessageHandler
 import lu.kremi151.chatster.core.command.builder.LiteralCommandBuilderImpl
 import lu.kremi151.chatster.core.command.builder.RootCommandBuilderImpl
-import lu.kremi151.chatster.core.config.Configurator
+import lu.kremi151.chatster.core.config.StaticBeanFactory
 import lu.kremi151.chatster.core.context.CommandContextImpl
 import lu.kremi151.chatster.core.context.ProfileContext
 import lu.kremi151.chatster.core.plugin.CorePlugin
@@ -47,6 +44,11 @@ import lu.kremi151.chatster.core.services.CommandMessageHandler
 import lu.kremi151.chatster.core.services.PlaintextCredentialStore
 import lu.kremi151.chatster.core.threading.ProfileThread
 import lu.kremi151.chatster.core.threading.RunningProfilesState
+import lu.kremi151.jector.AutoConfigurator
+import lu.kremi151.jector.Jector
+import lu.kremi151.jector.annotations.Inject
+import lu.kremi151.jector.annotations.Provider
+import lu.kremi151.jector.enums.Priority
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -107,11 +109,11 @@ open class Chatster {
 
         LOGGER.info("Configure plugins")
         configTime = System.currentTimeMillis()
-        val configurator = Configurator(pluginRegistry)
+        val configurator = Jector()
         configurator.collectProviders(this)
-        configurator.collectPluginProviders()
+        collectPluginProviders(configurator, pluginRegistry)
         configurator.initializeBeans()
-        configurator.autoConfigurePlugins()
+        autoConfigurePlugins(configurator, pluginRegistry)
         configurator.autoConfigure(this)
         configTime = System.currentTimeMillis() - configTime
         LOGGER.info("Configured plugins in {} ms", configTime)
@@ -225,7 +227,20 @@ open class Chatster {
         // TODO: Implement
     }
 
-    protected open fun loadProfiles(classLoader: ClassLoader, configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
+    private fun collectPluginProviders(jector: Jector, pluginRegistry: PluginRegistry) {
+        for (plugin in pluginRegistry.plugins) {
+            jector.collectProviders(plugin)
+            jector.collectProviders(listOf(StaticBeanFactory(plugin, plugin.javaClass)), Priority.HIGHEST, false)
+        }
+    }
+
+    private fun autoConfigurePlugins(autoConfigurator: AutoConfigurator, pluginRegistry: PluginRegistry) {
+        for (plugin in pluginRegistry.plugins) {
+            autoConfigurator.autoConfigure(plugin)
+        }
+    }
+
+    protected open fun loadProfiles(classLoader: ClassLoader, configurator: AutoConfigurator, outProfiles: MutableList<ProfileLauncher>) {
         val profilesFolder = this.profilesFolder
         val subfolders = profilesFolder.listFiles { file -> file.isDirectory && file.canRead() }
         if (subfolders == null || subfolders.isEmpty()) {

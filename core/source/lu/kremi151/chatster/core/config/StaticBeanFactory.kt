@@ -14,10 +14,17 @@
  * limitations under the License.
  */
 
-package lu.kremi151.chatster.api.service
+package lu.kremi151.chatster.core.config
 
-interface AutoConfigurator {
+import lu.kremi151.jector.interfaces.BeanFactory
 
-    fun autoConfigure(obj: Any)
+data class StaticBeanFactory<T> (
+        private val instance: T,
+        override val returnType: Class<T>
+): BeanFactory<T> {
+
+    override fun create(): T {
+        return instance
+    }
 
 }

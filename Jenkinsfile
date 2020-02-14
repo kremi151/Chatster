@@ -17,6 +17,12 @@ pipeline {
 				setBuildStatus('Build is pending', 'PENDING')
 			}
 		}
+		stage('Update Git submodules') {
+			steps {
+				sh 'git submodule update --init --recursive'
+				// sh 'git submodule foreach git pull origin master'
+			}
+		}
 		stage('Build') {
 			steps {
 				sh 'chmod +x gradlew'

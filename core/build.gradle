@@ -15,8 +15,10 @@ dependencies {
     implementation group: 'com.mojang', name: 'brigadier', version: libBrigardierVersion
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: libOkHttpVersion
     implementation group: 'com.squareup.okhttp3', name: 'okhttp-urlconnection', version: libOkHttpVersion
+    implementation project(':jector-lib')
 
     api project(':api')
+    api project(':jector-api')
 
     compileOnly group: 'org.slf4j', name: 'slf4j-api', version: libSlf4jVersion
 

@@ -1,3 +1,8 @@
 include ':api'
 include ':core'
 include ':server'
+
+include ':jector-lib'
+project(':jector-lib').projectDir = new File('Jector/lib')
+include ':jector-api'
+project(':jector-api').projectDir = new File('Jector/api')

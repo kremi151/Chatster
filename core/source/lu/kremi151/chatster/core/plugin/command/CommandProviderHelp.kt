@@ -17,11 +17,11 @@
 package lu.kremi151.chatster.core.plugin.command
 
 import com.mojang.brigadier.tree.CommandNode
-import lu.kremi151.chatster.api.annotations.Inject
 import lu.kremi151.chatster.api.command.*
 import lu.kremi151.chatster.api.context.CommandContext
 import lu.kremi151.chatster.core.command.builder.ExecutedCommandImpl
 import lu.kremi151.chatster.core.services.CommandDispatcherHolder
+import lu.kremi151.jector.annotations.Inject
 
 class CommandProviderHelp: CommandProvider {
 

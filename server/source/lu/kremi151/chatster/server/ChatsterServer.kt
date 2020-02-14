@@ -18,12 +18,12 @@ package lu.kremi151.chatster.server
 
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.core.Chatster
-import lu.kremi151.chatster.core.config.Configurator
 import lu.kremi151.chatster.server.profile.CLIProfileLauncher
+import lu.kremi151.jector.AutoConfigurator
 
 class ChatsterServer(private val useCli: Boolean): Chatster() {
 
-    override fun loadProfiles(classLoader: ClassLoader, configurator: Configurator, outProfiles: MutableList<ProfileLauncher>) {
+    override fun loadProfiles(classLoader: ClassLoader, configurator: AutoConfigurator, outProfiles: MutableList<ProfileLauncher>) {
         super.loadProfiles(classLoader, configurator, outProfiles)
         if (useCli) {
             outProfiles.add(CLIProfileLauncher())
