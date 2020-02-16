@@ -16,21 +16,10 @@
 
 package lu.kremi151.chatster.api.plugin
 
-import lu.kremi151.chatster.api.command.CommandProvider
-import lu.kremi151.chatster.api.util.Handler
+interface PluginContext {
 
-abstract class ChatsterPlugin {
+    fun <T> loadConfig(clazz: Class<T>): T?
 
-    open fun onPreInitialize() {}
-
-    @Deprecated("Use onLoad(PluginContext)")
-    open fun onLoad() {}
-
-    open fun onLoad(event: PluginContext) {
-        @Suppress("DEPRECATION")
-        onLoad()
-    }
-
-    open fun onRegisterCommands(register: Handler<CommandProvider>) {}
+    fun saveConfig(config: Any)
 
 }

@@ -95,7 +95,7 @@ open class Chatster {
 
         LOGGER.info("Loading plugins")
         var pluginsTime = System.currentTimeMillis()
-        val pluginRegistry = PluginRegistry()
+        val pluginRegistry = PluginRegistry(configFolder)
         loadSystemPlugins(pluginRegistry)
         val pluginClassLoader = loadPlugins(pluginRegistry)
         pluginsTime = System.currentTimeMillis() - pluginsTime
@@ -120,7 +120,7 @@ open class Chatster {
 
         LOGGER.info("Initialize plugins")
         pluginsTime = System.currentTimeMillis()
-        pluginRegistry.initializePlugins()
+        pluginRegistry.initializePlugins(objectMapper)
         pluginsTime = System.currentTimeMillis() - pluginsTime
         LOGGER.info("Initialized plugins in {} ms", pluginsTime)
 

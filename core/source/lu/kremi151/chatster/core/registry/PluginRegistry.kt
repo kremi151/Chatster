@@ -16,10 +16,13 @@
 
 package lu.kremi151.chatster.core.registry
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
+import lu.kremi151.chatster.core.plugin.util.PluginContextImpl
+import java.io.File
 import java.lang.IllegalStateException
 
-class PluginRegistry {
+class PluginRegistry(private val configFolder: File) {
 
     private var pluginList: List<ChatsterPlugin> = emptyList()
     private var idToPlugins: Map<String, PluginRegistration> = emptyMap()
@@ -49,9 +52,9 @@ class PluginRegistry {
         }
     }
 
-    fun initializePlugins() {
+    fun initializePlugins(objectMapper: ObjectMapper) {
         for (plugin in idToPlugins.entries) {
-            plugin.value.plugin.onLoad()
+            plugin.value.plugin.onLoad(PluginContextImpl(plugin.key, configFolder, objectMapper))
         }
     }
 
