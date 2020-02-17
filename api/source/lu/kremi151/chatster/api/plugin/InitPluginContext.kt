@@ -16,27 +16,4 @@
 
 package lu.kremi151.chatster.api.plugin
 
-import lu.kremi151.chatster.api.command.CommandProvider
-import lu.kremi151.chatster.api.util.Handler
-
-abstract class ChatsterPlugin {
-
-    @Deprecated("Use onPreInitialize(PreInitPluginContext)")
-    open fun onPreInitialize() {}
-
-    open fun onPreInitialize(context: PreInitPluginContext) {
-        @Suppress("DEPRECATION")
-        onPreInitialize()
-    }
-
-    @Deprecated("Use onLoad(InitPluginContext)")
-    open fun onLoad() {}
-
-    open fun onLoad(context: InitPluginContext) {
-        @Suppress("DEPRECATION")
-        onLoad()
-    }
-
-    open fun onRegisterCommands(register: Handler<CommandProvider>) {}
-
-}
+interface InitPluginContext: PreInitPluginContext

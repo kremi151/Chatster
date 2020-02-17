@@ -17,16 +17,16 @@
 package lu.kremi151.chatster.core.plugin.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import lu.kremi151.chatster.api.plugin.PluginContext
+import lu.kremi151.chatster.api.plugin.PreInitPluginContext
 import java.io.File
 import java.io.FileReader
 import java.io.FileWriter
 
-class PluginContextImpl(
+open class PreInitPluginContextImpl(
         private val pluginId: String,
         private val configFolder: File,
         private val objectMapper: ObjectMapper
-): PluginContext {
+): PreInitPluginContext {
 
     private val configFile: File
         get() = File(configFolder, "$pluginId.json")

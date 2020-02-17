@@ -18,7 +18,8 @@ package lu.kremi151.chatster.core.registry
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import lu.kremi151.chatster.api.plugin.ChatsterPlugin
-import lu.kremi151.chatster.core.plugin.util.PluginContextImpl
+import lu.kremi151.chatster.core.plugin.util.InitPluginContextImpl
+import lu.kremi151.chatster.core.plugin.util.PreInitPluginContextImpl
 import java.io.File
 import java.lang.IllegalStateException
 
@@ -47,14 +48,16 @@ class PluginRegistry(private val configFolder: File) {
     }
 
     fun preInitializePlugins() {
+        val objectMapper = ObjectMapper()
         for (plugin in idToPlugins.entries) {
-            plugin.value.plugin.onPreInitialize()
+            plugin.value.plugin.onPreInitialize(PreInitPluginContextImpl(plugin.key, configFolder, objectMapper))
         }
     }
 
-    fun initializePlugins(objectMapper: ObjectMapper) {
+    fun initializePlugins() {
+        val objectMapper = ObjectMapper()
         for (plugin in idToPlugins.entries) {
-            plugin.value.plugin.onLoad(PluginContextImpl(plugin.key, configFolder, objectMapper))
+            plugin.value.plugin.onLoad(InitPluginContextImpl(plugin.key, configFolder, objectMapper))
         }
     }
 

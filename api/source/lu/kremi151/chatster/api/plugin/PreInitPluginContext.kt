@@ -16,7 +16,7 @@
 
 package lu.kremi151.chatster.api.plugin
 
-interface PluginContext {
+interface PreInitPluginContext {
 
     fun <T> loadConfig(clazz: Class<T>): T?
 

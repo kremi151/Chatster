@@ -120,7 +120,7 @@ open class Chatster {
 
         LOGGER.info("Initialize plugins")
         pluginsTime = System.currentTimeMillis()
-        pluginRegistry.initializePlugins(objectMapper)
+        pluginRegistry.initializePlugins()
         pluginsTime = System.currentTimeMillis() - pluginsTime
         LOGGER.info("Initialized plugins in {} ms", pluginsTime)
 
