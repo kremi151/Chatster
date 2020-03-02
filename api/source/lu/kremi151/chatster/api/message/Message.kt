@@ -16,7 +16,10 @@
 
 package lu.kremi151.chatster.api.message
 
-class Message(val message: String?) {
+class Message(
+        val message: String?,
+        val senderId: String
+) {
 
     private var extensions: HashMap<Class<*>, Any>? = null
 

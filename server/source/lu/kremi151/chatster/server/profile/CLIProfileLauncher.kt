@@ -47,7 +47,7 @@ class CLIProfileLauncher: ProfileLauncher {
         Scanner(System.`in`).use { scanner ->
             while (true) {
                 val line = scanner.nextLine()
-                handleMessage(Message(line))
+                handleMessage(Message(line, "console"))
             }
         }
     }
