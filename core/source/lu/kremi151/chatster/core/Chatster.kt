@@ -109,7 +109,7 @@ open class Chatster {
 
         LOGGER.info("Configure plugins")
         configTime = System.currentTimeMillis()
-        val configurator = Jector()
+        val configurator = Jector(true /* TODO: Disable non-interfaces */)
         configurator.collectProviders(this)
         collectPluginProviders(configurator, pluginRegistry)
         configurator.initializeBeans()
