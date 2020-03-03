@@ -40,6 +40,9 @@ class ProfileThread (
     }
 
     private fun handleInboundMessage(message: Message) {
+        if (message.sender.profileId != profile.id) {
+            throw IllegalArgumentException("Sender reference must contain profileId of the issuing profile. Expected ${profile.id}, got ${message.sender.profileId}.")
+        }
         context.enqueueWorkerTask(Runnable {
             var interceptedMessage: Message? = message
             for (interceptor in messageHandlers) {

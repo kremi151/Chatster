@@ -18,6 +18,7 @@ package lu.kremi151.chatster.server.profile
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import lu.kremi151.chatster.api.message.Message
+import lu.kremi151.chatster.api.message.SenderReference
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import lu.kremi151.chatster.api.util.Handler
 import org.slf4j.Logger
@@ -31,9 +32,12 @@ class CLIProfileLauncher: ProfileLauncher {
 
     companion object {
         private val LOGGER: Logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass())
+
+        private const val PROFILE_ID = "console"
+        private val senderReference = SenderReference(PROFILE_ID, "console")
     }
 
-    override var id: String = ""
+    override var id: String = PROFILE_ID
 
     private fun println(text: String) {
         System.out.println("CLI > $text")
@@ -47,7 +51,7 @@ class CLIProfileLauncher: ProfileLauncher {
         Scanner(System.`in`).use { scanner ->
             while (true) {
                 val line = scanner.nextLine()
-                handleMessage(Message(line, "console"))
+                handleMessage(Message(line, senderReference))
             }
         }
     }
