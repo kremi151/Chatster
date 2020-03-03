@@ -18,6 +18,7 @@ package lu.kremi151.chatster.core.context
 
 import lu.kremi151.chatster.api.context.CommandContext
 import lu.kremi151.chatster.api.message.Message
+import lu.kremi151.chatster.api.message.SenderReference
 import lu.kremi151.chatster.api.profile.ProfileLauncher
 import java.io.File
 
@@ -25,6 +26,8 @@ class CommandContextImpl(
         private val inboundMessage: Message,
         private val profile: ProfileLauncher
 ): CommandContext {
+
+    override val sender: SenderReference get() = inboundMessage.sender
 
     override fun sendTextMessage(message: String) {
         profile.sendTextMessage(inboundMessage, message)

@@ -16,9 +16,12 @@
 
 package lu.kremi151.chatster.api.context
 
+import lu.kremi151.chatster.api.message.SenderReference
 import java.io.File
 
 interface CommandContext {
+
+    val sender: SenderReference
 
     fun sendTextMessage(message: String)
     fun sendTextMessage(file: File)
